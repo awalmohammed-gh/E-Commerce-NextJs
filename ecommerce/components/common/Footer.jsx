@@ -26,45 +26,57 @@ export default function Footer() {
           <div className="space-y-4">
             <Link
               href="/"
-              className="text-2xl sm:text-3xl font-bold text-white inline-block"
+              className="text-2xl sm:text-3xl font-bold inline-block"
             >
-              AURA
+              <span className="text-white">ELE</span>
+              <span className="text-[#D98880]">OKA</span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Discover premium products curated just for you. Quality meets
-              style in every piece.
+              Women&apos;s dresses made with care. Timeless silhouettes,
+              thoughtful fabrics, and pieces that make you feel like the best
+              version of yourself.
             </p>
             <div className="flex space-x-3 pt-2">
               <a
-                href="#"
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
                 aria-label="Facebook"
               >
                 <FaFacebook className="w-5 h-5" />
               </a>
               <a
-                href="#"
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
                 aria-label="Instagram"
               >
                 <FaInstagram className="w-5 h-5" />
               </a>
               <a
-                href="#"
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
                 aria-label="Twitter"
               >
                 <FaTwitter className="w-5 h-5" />
               </a>
               <a
-                href="#"
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
                 aria-label="YouTube"
               >
                 <FaYoutube className="w-5 h-5" />
               </a>
               <a
-                href="#"
+                href="https://tiktok.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
                 aria-label="TikTok"
               >
@@ -84,7 +96,7 @@ export default function Footer() {
                   href="/shop"
                   className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
                 >
-                  Shop All
+                  Shop All Dresses
                 </Link>
               </li>
               <li>
@@ -116,7 +128,7 @@ export default function Footer() {
                   href="/blog"
                   className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
                 >
-                  Blog
+                  Style Journal
                 </Link>
               </li>
             </ul>
@@ -146,6 +158,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/size-guide"
+                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
+                >
+                  Size Guide
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/privacy"
                   className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
                 >
@@ -157,15 +177,7 @@ export default function Footer() {
                   href="/terms"
                   className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
                 >
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/support"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  Support Center
+                  Terms &amp; Conditions
                 </Link>
               </li>
             </ul>
@@ -174,7 +186,7 @@ export default function Footer() {
           {/* Payment & Security */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-white">
-              Payment & Security
+              Payment &amp; Security
             </h3>
 
             {/* Payment Methods */}
@@ -210,7 +222,7 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center gap-2 text-gray-400 text-sm">
                   <Truck className="w-4 h-4 text-orange-400" />
-                  <span>Fast & Reliable Delivery</span>
+                  <span>Free delivery in Accra</span>
                 </div>
               </div>
             </div>
@@ -223,12 +235,12 @@ export default function Footer() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-sm text-center sm:text-left">
-              &copy; {currentYear} AURA. All rights reserved.
+              &copy; {currentYear} ELEOKA. All rights reserved.
             </p>
             <div className="flex items-center gap-1 text-gray-400 text-sm">
               <span>Made with</span>
               <Heart className="w-4 h-4 text-red-500 fill-red-500 animate-pulse" />
-              <span>by AURA Team</span>
+              <span>by ELEOKA Team</span>
             </div>
             <div className="flex space-x-4 text-sm">
               <Link
