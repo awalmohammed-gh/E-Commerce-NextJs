@@ -1,0 +1,1 @@
+text-color:text-[#0F172A]
