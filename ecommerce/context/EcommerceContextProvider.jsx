@@ -8,7 +8,53 @@ const EcommerceContext = createContext();
 export const EcommerceContextProvider = ({ children }) => {
   const [addItems, setAddItems] = useState({});
 
-  // Add one to quantity
+  /* ---------------------------------------------------------
+     Address state - multiple addresses, session only
+  --------------------------------------------------------- */
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+
+  /* Add a new address - returns the created address */
+ const addAddress = (data) => {
+   const id = `addr-${Date.now()}`;
+
+   const next = { ...data, id };
+
+   setAddresses((prev) => [...prev, next]);
+
+   if (!selectedAddressId) {
+     setSelectedAddressId(id);
+   }
+
+   return next;
+ };
+
+  /* Update an existing address */
+  const updateAddress = (id, data) => {
+    setAddresses((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, ...data, id } : a)),
+    );
+  };
+
+  /* Delete an address */
+  const deleteAddress = (id) => {
+    setAddresses((prev) => prev.filter((a) => a.id !== id));
+    if (selectedAddressId === id) {
+      setSelectedAddressId(null);
+    }
+  };
+
+  /* Select an address */
+  const selectAddress = (id) => {
+    setSelectedAddressId(id);
+  };
+
+  /* The currently selected address object (or null) */
+  const address = addresses.find((a) => a.id === selectedAddressId) || null;
+
+  /* ---------------------------------------------------------
+     Cart logic - unchanged
+  --------------------------------------------------------- */
   const handleAddToCart = (productId, size) => {
     setAddItems((prev) => ({
       ...prev,
@@ -19,7 +65,6 @@ export const EcommerceContextProvider = ({ children }) => {
     }));
   };
 
-  // Subtract one (never below 0)
   const handleRemoveFromCart = (productId, size) => {
     setAddItems((prev) => ({
       ...prev,
@@ -30,7 +75,6 @@ export const EcommerceContextProvider = ({ children }) => {
     }));
   };
 
-  //Set quantity to an exact number (used by "update" input)
   const updateItemQuantity = (productId, size, quantity) => {
     setAddItems((prev) => ({
       ...prev,
@@ -41,12 +85,10 @@ export const EcommerceContextProvider = ({ children }) => {
     }));
   };
 
-  //PURE getter — reads only, never sets state
   const getItemQuantity = (productId, size) => {
     return addItems?.[productId]?.[size] ?? 0;
   };
 
-  // Total number of items in cart
   const handleCartCount = () => {
     let count = 0;
     for (const productId in addItems) {
@@ -57,7 +99,6 @@ export const EcommerceContextProvider = ({ children }) => {
     return count;
   };
 
-  // Total price
   const totalAmount = useMemo(() => {
     let total = 0;
     for (const productId in addItems) {
@@ -71,10 +112,10 @@ export const EcommerceContextProvider = ({ children }) => {
     return total;
   }, [addItems]);
 
-  // Delete an entire product (all sizes)
   const deleteItemFromCart = (productId, size) => {
     setAddItems((prev) => {
       const updatedCart = { ...prev };
+      if (!updatedCart[productId]) return updatedCart;
 
       delete updatedCart[productId][size];
 
@@ -86,7 +127,11 @@ export const EcommerceContextProvider = ({ children }) => {
     });
   };
 
+  /* ---------------------------------------------------------
+     Context value
+  --------------------------------------------------------- */
   const commerceValue = {
+    // Cart
     addItems,
     handleAddToCart,
     handleRemoveFromCart,
@@ -95,6 +140,15 @@ export const EcommerceContextProvider = ({ children }) => {
     handleCartCount,
     deleteItemFromCart,
     totalAmount,
+
+    // Address (multi, session-only)
+    addresses,
+    address, // currently selected one (or null)
+    selectedAddressId,
+    addAddress,
+    updateAddress,
+    deleteAddress,
+    selectAddress,
   };
 
   return (

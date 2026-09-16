@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function MyShoppingCart() {
   const {
@@ -15,10 +16,11 @@ export default function MyShoppingCart() {
     handleAddToCart,
     handleRemoveFromCart,
     getItemQuantity,
-    deleteItemFromCart, // ✅ added
+    deleteItemFromCart, 
   } = useEcommerce();
 
   const [cartData, setCartData] = useState([]);
+  const router = useRouter()
 
   useEffect(() => {
     const saveCart = [];
@@ -236,6 +238,7 @@ export default function MyShoppingCart() {
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               disabled={cartData.length === 0}
+              onClick={() => router.push("/checkout")}
               className="mt-6 w-full bg-[#1C1A17] text-[#F5F1EA] py-3.5 rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#332F29] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Proceed to Checkout
