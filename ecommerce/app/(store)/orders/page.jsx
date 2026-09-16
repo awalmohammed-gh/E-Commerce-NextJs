@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, ShoppingBag, Clock } from "lucide-react";
+import { Package, ShoppingBag, Clock, MapPin } from "lucide-react";
 import { useEcommerce } from "@/context/EcommerceContextProvider";
 import { products } from "@/data/images/data";
 import EmptyCheckout from "@/ui/EmptyCheckout";
@@ -73,6 +73,31 @@ export default function MyOrders() {
           {ordersData.length} {ordersData.length === 1 ? "item" : "items"}
         </p>
       </div>
+
+      {/* Delivery address */}
+      {address && (
+        <div className="mb-6 bg-white rounded-2xl border border-[#1C1A17]/5 shadow-[0_1px_2px_rgba(28,26,23,0.04)] p-5">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#D98880]/15 flex items-center justify-center shrink-0">
+              <MapPin className="w-4 h-4 text-[#D98880]" />
+            </div>
+            <div className="flex-1 min-w-0 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8A6A52] mb-1.5">
+                Delivery address
+              </p>
+              <p className="font-semibold text-[#1C1A17]">{address.fullName}</p>
+              <p className="text-xs text-[#8A6A52]">{address.phone}</p>
+              <p className="text-[#4A463F] mt-1.5">
+                {address.address}
+                {address.city && `, ${address.city}`}
+                {address.region && `, ${address.region}`}
+                {address.country && `, ${address.country}`}
+                {address.postalCode && ` ${address.postalCode}`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status strip */}
       <div className="flex items-center gap-3 mb-6 text-sm">
