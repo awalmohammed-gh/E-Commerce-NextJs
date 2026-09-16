@@ -11,7 +11,7 @@ const poppins = Poppins({
 
 export const metadata = {
   title: {
-    default: "ELEOKA — Women's Dresses, Made with Care",
+    default: "ELEOKA Women's Dresses, Made with Care",
     template: "%s | ELEOKA",
   },
 
@@ -35,14 +35,14 @@ export const metadata = {
     type: "website",
     siteName: "ELEOKA",
     locale: "en_GH",
-    title: "ELEOKA — Women's Dresses, Made with Care",
+    title: "ELEOKA Women's Dresses, Made with Care",
     description:
       "A women's dress boutique born in Accra, made for women everywhere.",
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "ELEOKA — Women's Dresses, Made with Care",
+    title: "ELEOKA Women's Dresses, Made with Care",
     description:
       "A women's dress boutique born in Accra, made for women everywhere.",
   },

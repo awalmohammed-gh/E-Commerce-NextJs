@@ -43,7 +43,7 @@ export const products = [
     _id: "prd1a2b3c4d5e",
     name: "Abstract Face Button-Up",
     description:
-      "Elevate your everyday wardrobe with this stylish short-sleeve button-down crop shirt, featuring a bold abstract face line art pattern that adds a modern artistic touch to any outfit. Crafted from lightweight woven fabric, it offers breathability and comfort, making it ideal for effortless everyday styling. Whether paired with high-waisted jeans, skirts, or layered over a tank top, this versatile piece transitions seamlessly from casual daywear to a chic evening look. The cropped cut flatters the waistline while the relaxed fit ensures all-day comfort.",
+      "Elevate your everyday wardrobe with this stylish short-sleeve button-down crop shirt, featuring a bold abstract face line art pattern that adds a modern artistic touch to any outfit. Crafted from lightweight woven fabric, it offers breath ability and comfort, making it ideal for effortless everyday styling. Whether paired with high-waisted jeans, skirts, or layered over a tank top, this versatile piece transitions seamlessly from casual day wear to a chic evening look. The cropped cut flatters the waistline while the relaxed fit ensures all-day comfort.",
     price: 120,
     offerPrice: null,
     images: [img1],

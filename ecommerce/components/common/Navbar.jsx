@@ -231,7 +231,7 @@ export default function Navbar() {
                 aria-label="Account menu"
                 aria-expanded={openUser}
               >
-                <UserIcon className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-[#0F172A]" />
+                <UserIcon className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-[#0F172A]" />
                 <ChevronDown
                   className={`hidden sm:block w-4 h-4 transition-transform duration-200 ${
                     openUser ? "rotate-180" : ""
@@ -320,7 +320,7 @@ export default function Navbar() {
                         </div>
                         <div className="border-t border-gray-100" />
                         <Link
-                          href="/signin"
+                          href="/login"
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#0F172A] hover:bg-gray-50 transition-colors"
                           onClick={() => setOpenUser(false)}
                         >
