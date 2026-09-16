@@ -246,7 +246,6 @@ export default function MyShop() {
           )}
         </div>
 
-        {/* Current range display */}
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-semibold text-[#0F172A]">
             GH₵{priceRange[0].toLocaleString()}
@@ -257,12 +256,9 @@ export default function MyShop() {
           </span>
         </div>
 
-        {/* Dual slider */}
         <div className="relative h-6 flex items-center">
-          {/* Track background */}
           <div className="absolute left-0 right-0 h-1 bg-gray-200 rounded-full" />
 
-          {/* Active track */}
           <div
             className="absolute h-1 bg-[#0F172A] rounded-full"
             style={{
@@ -271,7 +267,6 @@ export default function MyShop() {
             }}
           />
 
-          {/* Min thumb */}
           <input
             type="range"
             min={ABS_MIN}
@@ -282,7 +277,6 @@ export default function MyShop() {
             aria-label="Minimum price"
           />
 
-          {/* Max thumb */}
           <input
             type="range"
             min={ABS_MIN}
@@ -294,7 +288,6 @@ export default function MyShop() {
           />
         </div>
 
-        {/* Manual input boxes */}
         <div className="grid grid-cols-2 gap-3 mt-5">
           <div>
             <label className="block text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-1">
@@ -528,133 +521,22 @@ export default function MyShop() {
                 }
                 className={`grid ${
                   grid === "grid"
-                    ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
-                    : "grid-cols-1"
-                } gap-5`}
+                    ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5"
+                    : "grid-cols-1 gap-3 sm:gap-4"
+                }`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.4 }}
               >
                 {paginatedProducts.length > 0 ? (
-                  grid === "grid" ? (
-                    paginatedProducts.map((product, index) => (
-                      <ProductCard product={product} key={index} />
-                    ))
-                  ) : (
-                    paginatedProducts.map((product, index) => (
-                      <motion.div
-                        key={index}
-                        className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 transition-colors duration-300"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                      >
-                        <Link
-                          href={`/product/${product._id}`}
-                          className="flex flex-col sm:flex-row"
-                        >
-                          <div className="relative w-full sm:w-44 h-44 sm:h-auto aspect-square sm:aspect-auto flex-shrink-0 overflow-hidden bg-gray-50">
-                            <Image
-                              src={
-                                product.images?.[0] || "/placeholder-image.jpg"
-                              }
-                              alt={product.name}
-                              fill
-                              className="object-cover transition-transform duration-500 group-hover:scale-105"
-                              sizes="(max-width: 640px) 100vw, 176px"
-                            />
-                            {product.offerPrice &&
-                              product.offerPrice < product.price && (
-                                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                                  -
-                                  {Math.round(
-                                    ((product.price - product.offerPrice) /
-                                      product.price) *
-                                      100,
-                                  )}
-                                  %
-                                </div>
-                              )}
-                          </div>
-
-                          <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between gap-3">
-                            <div>
-                              <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-xs text-gray-400 mb-1">
-                                <span className="capitalize">
-                                  {product.category}
-                                </span>
-                                {product.subCategory && (
-                                  <>
-                                    <span className="text-gray-300">·</span>
-                                    <span className="capitalize">
-                                      {product.subCategory}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-
-                              <h3 className="text-base font-semibold text-[#0F172A] line-clamp-2 mb-1.5 group-hover:text-[#0F172A]/80 transition-colors">
-                                {product.name}
-                              </h3>
-
-                              {product.description && (
-                                <p className="text-sm text-gray-500 line-clamp-2">
-                                  {product.description}
-                                </p>
-                              )}
-                            </div>
-
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-baseline gap-2">
-                                {product.offerPrice &&
-                                product.offerPrice < product.price ? (
-                                  <>
-                                    <span className="text-lg font-bold text-[#0F172A]">
-                                      GH₵
-                                      {product.offerPrice.toLocaleString(
-                                        "en-GH",
-                                        {
-                                          minimumFractionDigits: 2,
-                                          maximumFractionDigits: 2,
-                                        },
-                                      )}
-                                    </span>
-                                    <span className="text-sm text-gray-400 line-through">
-                                      GH₵
-                                      {product.price.toLocaleString("en-GH", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      })}
-                                    </span>
-                                  </>
-                                ) : (
-                                  <span className="text-lg font-bold text-[#0F172A]">
-                                    GH₵
-                                    {product.price.toLocaleString("en-GH", {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}
-                                  </span>
-                                )}
-                              </div>
-
-                              <button
-                                className="bg-[#0F172A] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors duration-200 flex-shrink-0"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  console.log("Added to cart:", product._id);
-                                }}
-                              >
-                                Add to Cart
-                              </button>
-                            </div>
-                          </div>
-                        </Link>
-                      </motion.div>
-                    ))
-                  )
+                  paginatedProducts.map((product, index) => (
+                    <ProductCard
+                      key={product._id || index}
+                      product={product}
+                      variant={grid === "list" ? "list" : "grid"}
+                    />
+                  ))
                 ) : (
                   <motion.div
                     className="col-span-full text-center py-16"
@@ -757,7 +639,6 @@ export default function MyShop() {
       <AnimatePresence>
         {showFilters && (
           <>
-            {/* Backdrop */}
             <motion.div
               className="lg:hidden fixed inset-0 bg-black/40 z-40"
               initial={{ opacity: 0 }}
@@ -766,7 +647,6 @@ export default function MyShop() {
               onClick={() => setShowFilters(false)}
             />
 
-            {/* Drawer */}
             <motion.div
               className="lg:hidden fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-white z-50 shadow-2xl overflow-y-auto"
               initial={{ x: "100%" }}
