@@ -2,14 +2,13 @@
 
 import { products } from "@/data/images/data";
 import ProductCard from "../card/ProductCard";
-import { Sparkles, ArrowRight, FlameIcon } from "lucide-react";
+import {ArrowRight, FlameIcon } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function NewArrival() {
   const newArrivalData = products
     .filter((product) => product.isNew)
-    .sort(() => 0.5 - Math.random());
 
   return (
     <section className="bg-white py-12 px-4 sm:px-6 lg:px-8">

@@ -6,8 +6,8 @@ import Services from "@/components/common/Services";
 import DealsOff from "@/components/landing/DealsOff";
 import Hero from "@/components/landing/Hero";
 import LandingCategories from "@/components/advert/LandingCategories";
-import NewArrival from "@/components/landing/NewArrival";
 import TopSelling from "@/components/landing/TopSelling";
+import NewArrival from "@/components/landing/NewArrival";
 
 export default function Home() {
   return (
@@ -16,7 +16,7 @@ export default function Home() {
       <LandingCategories />
       <TopSelling />
       <ThirdLandingAdvert/>
-      <NewArrival />
+      <NewArrival/>
       <FirstLandingAdvert />
       <DealsOff />
       <TopDealAdvert/>

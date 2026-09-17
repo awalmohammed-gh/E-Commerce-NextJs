@@ -51,7 +51,7 @@ export default function CreateAddress() {
   /* Reset form */
   const resetForm = (addr = null) => {
     setForm({
-      fullName: addr?.fullName || "Eleoka",
+      fullName: addr?.fullName || "",
       phone: addr?.phone || "",
       address: addr?.address || "",
       city: addr?.city || "",
