@@ -1,18 +1,19 @@
 "use client";
 
-import { products } from "@/data/images/data";
-import { createContext, useContext, useMemo, useState } from "react";
+// import { products } from "@/data/images/data";
+import axios from "axios";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const EcommerceContext = createContext();
 
 export const EcommerceContextProvider = ({ children }) => {
   const [addItems, setAddItems] = useState({});
-
-  /* ---------------------------------------------------------
-     Address state - multiple addresses, session only
-  --------------------------------------------------------- */
+  const [user, setUser] = useState(null)
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [products, setProducts] = useState([]);
+  
 
   /* Add a new address - returns the created address */
  const addAddress = (data) => {
@@ -55,15 +56,26 @@ export const EcommerceContextProvider = ({ children }) => {
   /* ---------------------------------------------------------
      Cart logic - unchanged
   --------------------------------------------------------- */
-  const handleAddToCart = (productId, size) => {
-    setAddItems((prev) => ({
-      ...prev,
-      [productId]: {
-        ...prev[productId],
-        [size]: (prev[productId]?.[size] || 0) + 1,
-      },
-    }));
-  };
+const handleAddToCart = async (itemId, size) => {
+  try {
+    const { data } = await axios.post("/api/add-to-cart", {
+      itemId,
+      size,
+    });
+
+    if (data.success) {
+      setAddItems((prev) => ({
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          [size]: (prev[itemId]?.[size] || 0) + 1,
+        },
+      }));
+    }
+  } catch (error) {
+    console.error("Add to cart error:", error);
+  }
+};
 
   const handleRemoveFromCart = (productId, size) => {
     setAddItems((prev) => ({
@@ -99,18 +111,22 @@ export const EcommerceContextProvider = ({ children }) => {
     return count;
   };
 
-  const totalAmount = useMemo(() => {
-    let total = 0;
-    for (const productId in addItems) {
-      const product = products.find((item) => item._id === productId);
-      if (product) {
-        for (const size in addItems[productId]) {
-          total += product.price * addItems[productId][size];
-        }
+
+const totalAmount = useMemo(() => {
+  let total = 0;
+
+  for (const productId in addItems) {
+    const product = products.find((item) => item._id === productId);
+
+    if (product) {
+      for (const size in addItems[productId]) {
+        total += product.price * addItems[productId][size];
       }
     }
-    return total;
-  }, [addItems]);
+  }
+
+  return total;
+}, [addItems, products]);
 
   const deleteItemFromCart = (productId, size) => {
     setAddItems((prev) => {
@@ -126,6 +142,49 @@ export const EcommerceContextProvider = ({ children }) => {
       return updatedCart;
     });
   };
+
+
+  //fetch all products
+  useEffect(() =>{
+    const fetchProduct = async() =>{
+      try {
+        const {data} = await axios.get("/api/list");
+        if (data.success) {
+          setProducts(data.list);
+        } else {
+          console.error(data.message);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    fetchProduct()
+  },[])
+
+
+  // check if is the user
+
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const { data } = await axios.get("/api/auth/is-me");
+
+      if (data.success) {
+        setUser(data.user);
+        setIsLoggedIn(true);
+      } else {
+        setUser(null);
+        setIsLoggedIn(false);
+      }
+    } catch (error) {
+      setUser(null);
+      setIsLoggedIn(false);
+    }
+  };
+
+  checkAuth();
+}, []);
 
   /* ---------------------------------------------------------
      Context value
@@ -149,6 +208,11 @@ export const EcommerceContextProvider = ({ children }) => {
     updateAddress,
     deleteAddress,
     selectAddress,
+    user,
+    setUser,
+    isLoggedIn,
+    setIsLoggedIn,
+    products
   };
 
   return (

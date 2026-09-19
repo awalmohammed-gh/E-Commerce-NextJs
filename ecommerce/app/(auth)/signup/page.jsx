@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, User, Check, ArrowRight } from "lucide-react";
 import LoadingSpinner from "@/ui/LoadingSpinner";
 import Toast from "@/ui/Toast";
+import { useEcommerce } from "@/context/EcommerceContextProvider";
 
 export default function MySignUp() {
   const router = useRouter();
@@ -23,6 +24,8 @@ export default function MySignUp() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  const {setIsLoggedIn} = useEcommerce()
 
   const [toast, setToast] = useState({
     message: "",
@@ -114,7 +117,8 @@ export default function MySignUp() {
         showError(data.message || "Something went wrong");
         return;
       }
-
+      
+      setIsLoggedIn(true)
       setSubmitted(true);
       showSuccess("Account created successfully.");
 

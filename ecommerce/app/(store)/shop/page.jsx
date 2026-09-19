@@ -1,6 +1,5 @@
 "use client";
 
-import { products } from "@/data/images/data";
 import {
   ChevronRight,
   SearchIcon,
@@ -19,19 +18,15 @@ import ProductCard from "@/components/card/ProductCard";
 import Image from "next/image";
 import Newsletter from "@/components/common/NewsLetter";
 import { shopBanner } from "@/data/db";
-
-/* ---------------------------------------------------------
-   Compute absolute min / max from the full product catalog.
-   These become the bounds of the slider.
---------------------------------------------------------- */
-const effectivePrice = (p) =>
-  p.offerPrice && p.offerPrice < p.price ? p.offerPrice : p.price;
-
-const ABS_MIN = Math.floor(Math.min(...products.map((p) => effectivePrice(p))));
-const ABS_MAX = Math.ceil(Math.max(...products.map((p) => effectivePrice(p))));
+import { useEcommerce } from "@/context/EcommerceContextProvider";
 
 export default function MyShop() {
-  const categories = ["All", ...new Set(products.map((p) => p.category))];
+  const { products } = useEcommerce();
+
+  const categories = useMemo(
+    () => ["All", ...new Set(products.map((p) => p.category))],
+    [products],
+  );
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
@@ -40,7 +35,6 @@ export default function MyShop() {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
-  const [priceRange, setPriceRange] = useState([ABS_MIN, ABS_MAX]);
   const productPerPage = 10;
 
   /* ---------------------------------------------------------
@@ -59,14 +53,13 @@ export default function MyShop() {
     ];
 
     return ["All", ...unique];
-  }, [selectedCategory]);
+  }, [selectedCategory, products]);
 
   /* ---------------------------------------------------------
-     Filtered products
+     Filtered products (no price filtering)
   --------------------------------------------------------- */
   const filteredProduct = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const [minPrice, maxPrice] = priceRange;
 
     return products
       .filter((product) => {
@@ -85,12 +78,8 @@ export default function MyShop() {
         (product) =>
           selectedSubCategory === "All" ||
           product.subCategory === selectedSubCategory,
-      )
-      .filter((product) => {
-        const price = effectivePrice(product);
-        return price >= minPrice && price <= maxPrice;
-      });
-  }, [search, selectedCategory, selectedSubCategory, priceRange]);
+      );
+  }, [search, selectedCategory, selectedSubCategory, products]);
 
   const startIndex = (currentPage - 1) * productPerPage;
   const paginatedProducts = filteredProduct.slice(
@@ -112,26 +101,6 @@ export default function MyShop() {
     setSelectedSubCategory(subCategory);
     setCurrentPage(1);
   };
-
-  const handleMinPrice = (value) => {
-    const next = Math.min(Number(value), priceRange[1]);
-    setPriceRange([next, priceRange[1]]);
-    setCurrentPage(1);
-  };
-
-  const handleMaxPrice = (value) => {
-    const next = Math.max(Number(value), priceRange[0]);
-    setPriceRange([priceRange[0], next]);
-    setCurrentPage(1);
-  };
-
-  const clearPriceRange = () => {
-    setPriceRange([ABS_MIN, ABS_MAX]);
-    setCurrentPage(1);
-  };
-
-  const isPriceFiltered =
-    priceRange[0] !== ABS_MIN || priceRange[1] !== ABS_MAX;
 
   /* ---------------------------------------------------------
      Banner slider
@@ -157,15 +126,7 @@ export default function MyShop() {
   }, []);
 
   /* ---------------------------------------------------------
-     Progress-bar percentages for the slider track
-  --------------------------------------------------------- */
-  const minPercent =
-    ((priceRange[0] - ABS_MIN) / (ABS_MAX - ABS_MIN || 1)) * 100;
-  const maxPercent =
-    ((priceRange[1] - ABS_MIN) / (ABS_MAX - ABS_MIN || 1)) * 100;
-
-  /* ---------------------------------------------------------
-     Shared filter panel (used for both desktop sidebar and mobile drawer)
+     Shared filter panel (desktop sidebar + mobile drawer)
   --------------------------------------------------------- */
   const FilterPanel = (
     <div className="rounded-2xl p-5 border border-gray-100 space-y-6 bg-white">
@@ -230,101 +191,6 @@ export default function MyShop() {
         </div>
       )}
 
-      {/* Price Range */}
-      <div className="pt-5 border-t border-gray-100">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
-            Price Range
-          </p>
-          {isPriceFiltered && (
-            <button
-              onClick={clearPriceRange}
-              className="text-xs text-gray-400 hover:text-[#0F172A] underline underline-offset-2 transition-colors"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-semibold text-[#0F172A]">
-            GH₵{priceRange[0].toLocaleString()}
-          </span>
-          <span className="text-xs text-gray-400">—</span>
-          <span className="text-sm font-semibold text-[#0F172A]">
-            GH₵{priceRange[1].toLocaleString()}
-          </span>
-        </div>
-
-        <div className="relative h-6 flex items-center">
-          <div className="absolute left-0 right-0 h-1 bg-gray-200 rounded-full" />
-
-          <div
-            className="absolute h-1 bg-[#0F172A] rounded-full"
-            style={{
-              left: `${minPercent}%`,
-              right: `${100 - maxPercent}%`,
-            }}
-          />
-
-          <input
-            type="range"
-            min={ABS_MIN}
-            max={ABS_MAX}
-            value={priceRange[0]}
-            onChange={(e) => handleMinPrice(e.target.value)}
-            className="absolute w-full h-1 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#0F172A] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#0F172A] [&::-moz-range-thumb]:cursor-pointer"
-            aria-label="Minimum price"
-          />
-
-          <input
-            type="range"
-            min={ABS_MIN}
-            max={ABS_MAX}
-            value={priceRange[1]}
-            onChange={(e) => handleMaxPrice(e.target.value)}
-            className="absolute w-full h-1 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#0F172A] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#0F172A] [&::-moz-range-thumb]:cursor-pointer"
-            aria-label="Maximum price"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 mt-5">
-          <div>
-            <label className="block text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-              Min
-            </label>
-            <div className="flex items-center border border-gray-200 rounded-lg px-2 py-1.5 focus-within:border-[#0F172A] transition-colors">
-              <span className="text-xs text-gray-400 mr-1">GH₵</span>
-              <input
-                type="number"
-                min={ABS_MIN}
-                max={priceRange[1]}
-                value={priceRange[0]}
-                onChange={(e) => handleMinPrice(e.target.value)}
-                className="w-full bg-transparent outline-none text-sm text-[#0F172A]"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-              Max
-            </label>
-            <div className="flex items-center border border-gray-200 rounded-lg px-2 py-1.5 focus-within:border-[#0F172A] transition-colors">
-              <span className="text-xs text-gray-400 mr-1">GH₵</span>
-              <input
-                type="number"
-                min={priceRange[0]}
-                max={ABS_MAX}
-                value={priceRange[1]}
-                onChange={(e) => handleMaxPrice(e.target.value)}
-                className="w-full bg-transparent outline-none text-sm text-[#0F172A]"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Product Count */}
       <div className="pt-5 border-t border-gray-100">
         <p className="text-sm text-gray-500">
@@ -345,7 +211,7 @@ export default function MyShop() {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            className="relative w-full h-[200px] sm:h-[250px] lg:h-[300px]"
+            className="relative w-full h-50 sm:h-62.5 lg:h-75"
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
@@ -358,7 +224,7 @@ export default function MyShop() {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/50 to-[#0F172A]/10" />
+            <div className="absolute inset-0 bg-linear-to-t from-[#0F172A] via-[#0F172A]/50 to-[#0F172A]/10" />
 
             <div className="absolute -top-10 right-10 w-56 h-56 rounded-full bg-orange-400/20 blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-1/4 w-72 h-72 rounded-full bg-white/10 blur-3xl pointer-events-none" />
@@ -435,9 +301,6 @@ export default function MyShop() {
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filters
-            {isPriceFiltered && (
-              <span className="w-2 h-2 rounded-full bg-[#0F172A]" />
-            )}
           </button>
 
           <div className="flex items-center gap-2 border border-gray-200 rounded-full py-2.5 px-4 w-full sm:w-72 bg-gray-50 focus-within:bg-white focus-within:border-[#0F172A] transition-colors duration-200 ml-auto">
@@ -516,12 +379,11 @@ export default function MyShop() {
                   selectedSubCategory +
                   search +
                   currentPage +
-                  grid +
-                  priceRange.join("-")
+                  grid
                 }
                 className={`grid ${
                   grid === "grid"
-                    ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5"
+                    ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5"
                     : "grid-cols-1 gap-3 sm:gap-4"
                 }`}
                 initial={{ opacity: 0, y: 20 }}

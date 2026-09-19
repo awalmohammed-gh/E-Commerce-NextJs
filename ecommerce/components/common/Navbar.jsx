@@ -31,7 +31,7 @@ export default function Navbar() {
   const [openCategories, setOpenCategories] = useState(false);
 
   // Get the cart counter from context
-  const { handleCartCount, addItems } = useEcommerce();
+  const { handleCartCount, addItems, user, isLoggedIn } = useEcommerce();
 
   // Memoize so we only recount when cart contents change
   const cartCount = useMemo(() => handleCartCount(), [addItems]);
@@ -65,12 +65,6 @@ export default function Navbar() {
     };
   }, []);
 
-  const isLoggedIn = false;
-  const user = {
-    name: "Mohammed Awal",
-    email: "mohammed@example.com",
-  };
-
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Shop", path: "/shop" },
@@ -100,8 +94,11 @@ export default function Navbar() {
     setOpenMenu(false);
   };
 
+  // Helper to get user's first name
+  const firstName = user?.fullName?.split(" ")[0] || "";
+
   return (
-    <header className="bg-white/90 backdrop-blur-md text-[#0F172A] sticky top-0 left-0 right-0 w-full shadow-sm border-b border-gray-100 z-[100]">
+    <header className="bg-white/90 backdrop-blur-md text-[#0F172A] sticky top-0 left-0 right-0 w-full shadow-sm border-b border-gray-100 z-100">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* LEFT — Logo + desktop nav */}
@@ -122,7 +119,7 @@ export default function Navbar() {
                   className="relative text-[#0F172A] hover:text-gray-600 transition-colors duration-200 text-sm lg:text-base font-medium group"
                 >
                   {link.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#0F172A] group-hover:w-full transition-all duration-300" />
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0F172A] group-hover:w-full transition-all duration-300" />
                 </Link>
               ))}
 
@@ -203,7 +200,7 @@ export default function Navbar() {
               className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
               aria-label="Wishlist"
             >
-              <HeartIcon className="w-5 h-5 sm:w-[22px] sm:h-[22px] text-[#0F172A]" />
+              <HeartIcon className="w-5 h-5 sm:w-5.5 sm:h-[22px] text-[#0F172A]" />
               <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-red-600 text-white text-[10px] font-semibold rounded-full flex items-center justify-center">
                 0
               </span>
@@ -227,11 +224,22 @@ export default function Navbar() {
             <div className="relative" ref={userRef}>
               <button
                 onClick={() => setOpenUser((v) => !v)}
-                className="flex items-center gap-1 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-1.5 p-2 rounded-full hover:bg-gray-100 transition-colors"
                 aria-label="Account menu"
                 aria-expanded={openUser}
               >
-                <UserIcon className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-[#0F172A]" />
+                {isLoggedIn && user?.fullName ? (
+                  <div className="w-7 h-7 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-xs font-semibold">
+                    {user.fullName.charAt(0).toUpperCase()}
+                  </div>
+                ) : (
+                  <UserIcon className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-[#0F172A]" />
+                )}
+                {isLoggedIn && firstName && (
+                  <span className="hidden sm:block text-sm font-medium text-[#0F172A] max-w-[100px] truncate">
+                    {firstName}
+                  </span>
+                )}
                 <ChevronDown
                   className={`hidden sm:block w-4 h-4 transition-transform duration-200 ${
                     openUser ? "rotate-180" : ""
@@ -253,11 +261,11 @@ export default function Navbar() {
                         <div className="px-4 py-3 border-b border-gray-100">
                           <p className="text-sm font-semibold text-[#0F172A] flex items-center gap-2">
                             <User className="w-4 h-4" />
-                            {user.name}
+                            {user?.fullName}
                           </p>
                           <p className="text-xs text-gray-500 flex items-center gap-2 mt-1">
                             <Mail className="w-3 h-3" />
-                            {user.email}
+                            {user?.email}
                           </p>
                         </div>
 
@@ -378,6 +386,23 @@ export default function Navbar() {
               className="md:hidden overflow-hidden"
             >
               <div className="py-4 border-t border-gray-100">
+                {/* Mobile user greeting */}
+                {isLoggedIn && user?.fullName && (
+                  <div className="flex items-center gap-3 px-3 py-3 mb-3 bg-gray-50 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-[#0F172A] text-white flex items-center justify-center text-sm font-semibold shrink-0">
+                      {user.fullName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#0F172A] truncate">
+                        {user.fullName}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <form
                   onSubmit={handleSearch}
                   className="flex items-center border border-gray-200 rounded-full px-3 py-2 mb-4 bg-white focus-within:border-[#0F172A] transition-colors"
@@ -434,21 +459,52 @@ export default function Navbar() {
                     </Link>
                   </div>
 
+                  {/* Mobile auth buttons */}
                   <div className="pt-4 mt-2 border-t border-gray-100 flex flex-col space-y-2 px-1">
-                    <Link
-                      href="/signin"
-                      className="text-center text-[#0F172A] border border-gray-200 hover:bg-gray-50 rounded-full py-2.5 text-sm font-medium transition-colors"
-                      onClick={() => setOpenMenu(false)}
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/signup"
-                      className="bg-[#0F172A] text-white text-center px-4 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
-                      onClick={() => setOpenMenu(false)}
-                    >
-                      Sign Up
-                    </Link>
+                    {isLoggedIn ? (
+                      <>
+                        <Link
+                          href="/account"
+                          className="text-center text-[#0F172A] border border-gray-200 hover:bg-gray-50 rounded-full py-2.5 text-sm font-medium transition-colors"
+                          onClick={() => setOpenMenu(false)}
+                        >
+                          My Account
+                        </Link>
+                        <Link
+                          href="/orders"
+                          className="text-center text-[#0F172A] border border-gray-200 hover:bg-gray-50 rounded-full py-2.5 text-sm font-medium transition-colors"
+                          onClick={() => setOpenMenu(false)}
+                        >
+                          My Orders
+                        </Link>
+                        <button
+                          className="bg-red-600 text-white text-center px-4 py-2.5 rounded-full text-sm font-medium hover:bg-red-700 transition-colors"
+                          onClick={() => {
+                            setOpenMenu(false);
+                            // TODO: logout
+                          }}
+                        >
+                          Sign Out
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href="/login"
+                          className="text-center text-[#0F172A] border border-gray-200 hover:bg-gray-50 rounded-full py-2.5 text-sm font-medium transition-colors"
+                          onClick={() => setOpenMenu(false)}
+                        >
+                          Sign In
+                        </Link>
+                        <Link
+                          href="/signup"
+                          className="bg-[#0F172A] text-white text-center px-4 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
+                          onClick={() => setOpenMenu(false)}
+                        >
+                          Sign Up
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

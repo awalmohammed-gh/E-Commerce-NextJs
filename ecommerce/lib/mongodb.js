@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import dns from "dns";
 
-dns.setServers(["1.1.1.1","1.0.0.1"]);
+dns.setServers(["1.1.1.1","8.8.8.8"]);
 
 export const connectMongodb = async () => {
   try {

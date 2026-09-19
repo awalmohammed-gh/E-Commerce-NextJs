@@ -5,7 +5,14 @@ import { products } from "@/data/images/data";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingBag,
+  ArrowRight,
+  LogIn,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 
@@ -16,12 +23,35 @@ export default function MyShoppingCart() {
     handleAddToCart,
     handleRemoveFromCart,
     getItemQuantity,
-    deleteItemFromCart, 
+    deleteItemFromCart,
+    user,
+    isLoggedIn,
   } = useEcommerce();
 
   const [cartData, setCartData] = useState([]);
-  const router = useRouter()
+  const [authChecked, setAuthChecked] = useState(false);
+  const router = useRouter();
 
+  /* ---------------------------------------------------------
+     Auth guard — redirect unauthenticated users to login,
+     preserving the intent to return to the cart afterwards.
+  --------------------------------------------------------- */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isLoggedIn) {
+        router.replace("/login?redirect=/shopping-cart");
+      } else {
+        setAuthChecked(true);
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [isLoggedIn, router]);
+
+  /* ---------------------------------------------------------
+     Build cart rows from the context shape:
+     addItems = { [productId]: { [size]: quantity } }
+  --------------------------------------------------------- */
   useEffect(() => {
     const saveCart = [];
     for (const productId in addItems) {
@@ -42,6 +72,28 @@ export default function MyShoppingCart() {
   const shipping = cartData.length > 0 ? 25 : 0;
   const subtotal = totalAmount || 0;
   const total = subtotal + shipping;
+
+
+  /* ---------------------------------------------------------
+     Gate rendering until we know the auth state.
+     Prevents a flash of cart content for logged-out users.
+  --------------------------------------------------------- */
+  if (!authChecked) {
+    return (
+      <section className="bg-[#F5F1EA] min-h-screen py-10 sm:py-14">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-10 h-10 border-4 border-[#1C1A17]/20 border-t-[#1C1A17] rounded-full animate-spin" />
+              <p className="text-sm text-[#8A6A52] font-utility">
+                Loading your cart…
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-[#F5F1EA] min-h-screen py-10 sm:py-14">
@@ -81,7 +133,6 @@ export default function MyShoppingCart() {
                     );
                     if (!product) return null;
 
-                    // Use the value already stored in cartData
                     const qty = cart.quantity;
                     const lineTotal = product.price * qty;
 
@@ -238,7 +289,14 @@ export default function MyShoppingCart() {
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               disabled={cartData.length === 0}
-              onClick={() => router.push("/checkout")}
+              onClick={() => {
+                // Double-check auth before navigating to checkout
+                if (!isLoggedIn) {
+                  router.push("/login?redirect=/checkout");
+                  return;
+                }
+                router.push("/checkout");
+              }}
               className="mt-6 w-full bg-[#1C1A17] text-[#F5F1EA] py-3.5 rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#332F29] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Proceed to Checkout
