@@ -69,6 +69,7 @@ export async function POST(request) {
       fullName,
       email,
       password: hashPassword,
+      cartData:{}
     });
 
     // Create JWT token
@@ -88,9 +89,14 @@ export async function POST(request) {
       {
         success: true,
         message: "User registered successfully",
-        user
+        user: {
+          id: newUser._id,
+          fullName: newUser.fullName,
+          email: newUser.email,
+          cartData: newUser.cartData,
+        },
       },
-      { status: 201 }
+      { status: 201 },
     );
 
     // Set cookie

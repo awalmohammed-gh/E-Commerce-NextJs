@@ -54,8 +54,9 @@ export async function POST(request) {
     cartData[itemId][size] = (cartData[itemId][size] || 0) + 1;
 
     user.cartData = cartData;
-
+    user.markModified("cartData");
     await user.save();
+   console.log("Saved cart:", user.toObject().cartData);
 
     return NextResponse.json({
       success: true,

@@ -19,22 +19,23 @@ import Toast from "@/ui/Toast";
 import EmptyCheckout from "@/ui/EmptyCheckout";
 import AddressModal from "@/components/modals/AddressModal";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 const PAYMENT_METHODS = [
   {
-    id: "card",
+    id: "Card",
     label: "Card",
     description: "Visa, Mastercard, Amex",
     icon: CreditCard,
   },
   {
-    id: "momo",
+    id: "Mobile Money",
     label: "Mobile Money",
     description: "MTN, Vodafone, AirtelTigo",
     icon: Smartphone,
   },
   {
-    id: "cod",
+    id: "Cash On Delivery",
     label: "Cash on Delivery",
     description: "Pay when your order arrives",
     icon: Banknote,
@@ -47,6 +48,7 @@ export default function MyCheckout() {
     selectedAddressId,
     selectAddress,
     addItems,
+    setAddItems,
     totalAmount,
     handleCartCount,
   } = useEcommerce();
@@ -118,10 +120,21 @@ export default function MyCheckout() {
 
     try {
       setPlacing(true);
-      // TODO: POST to /api/orders with { address, items, total, paymentMethod }
-      await new Promise((r) => setTimeout(r, 900));
-      showSuccess("Order placed successfully.");
-      router.push("/orders");
+
+      const orderItems = {
+        address: selectedAddress,
+        items: addItems,
+        totalAmount: total,
+        paymentMethod,
+      };
+      const {data} = await axios.post("/api/checkout", orderItems);
+      if(data.success){
+        showSuccess("Order placed successfully.");
+        router.push("/orders");
+        setAddItems({})
+      }else{
+        showError(data.message)
+      }
     } catch (err) {
       showError(err.message || "Something went wrong.");
     } finally {

@@ -2,6 +2,9 @@ import { connectMongodb } from "@/lib/mongodb";
 import { Checkout } from "@/models/Checkout";
 import { getAuthUser } from "@/middleware/auth";
 import { NextResponse } from "next/server";
+import { Users } from "@/models/User";
+
+const ALLOWED_PAYMENT_METHODS = ["Cash On Delivery", "Mobile Money", "Card"];
 
 export async function POST(request) {
   try {
@@ -9,21 +12,16 @@ export async function POST(request) {
 
     // 1. Check if user is logged in
     const authUser = getAuthUser(request);
-
     if (!authUser) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Not authenticated",
-        },
+        { success: false, message: "Not authenticated" },
         { status: 401 },
       );
     }
 
     // 2. Get checkout data from request
     const body = await request.json();
-
-    const { items, address, paymentMethod } = body;
+    const { items, address, paymentMethod,totalAmount } = body;
 
     // 3. Validate required fields
     if (!items || !address || !paymentMethod) {
@@ -36,16 +34,31 @@ export async function POST(request) {
       );
     }
 
-    // 4. Create checkout/order
+    // 4. Validate payment method against enum
+    if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Invalid payment method. Allowed: ${ALLOWED_PAYMENT_METHODS.join(", ")}`,
+        },
+        { status: 400 },
+      );
+    }
+
+    // 5. Create checkout/order
     const checkout = await Checkout.create({
       user: authUser.id,
       items,
       address,
-      paymentMethod:"Cash On Delivery",
-      payment:false
+      paymentMethod, // from client, validated
+      payment: paymentMethod !== "Cash On Delivery",
+      totalAmount
+      
     });
 
-    // 5. Return successful response
+    await Users.findByIdAndUpdate(authUser.id, { cartData: {} });
+
+    // 6. Return successful response
     return NextResponse.json(
       {
         success: true,
@@ -56,12 +69,8 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error("Checkout error:", error);
-
     return NextResponse.json(
-      {
-        success: false,
-        message: "Something went wrong",
-      },
+      { success: false, message: "Something went wrong" },
       { status: 500 },
     );
   }

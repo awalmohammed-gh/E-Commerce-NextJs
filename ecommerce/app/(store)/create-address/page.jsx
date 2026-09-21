@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Check, ArrowLeft, Trash2, Pencil, Plus } from "lucide-react";
 import { useEcommerce } from "@/context/EcommerceContextProvider";
 import Toast from "@/ui/Toast";
+import axios from "axios";
 
 export default function CreateAddress() {
   const {
@@ -79,20 +80,26 @@ export default function CreateAddress() {
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     if (!validate()) {
       showError("Please fix the errors below.");
       return;
     }
+    const addressFormData = new FormData();
 
-    if (editingAddress) {
-      updateAddress(editingAddress.id, form);
-      showSuccess("Address updated.");
-      setEditingId(null);
-    } else {
-      addAddress(form);
-      showSuccess("Address added.");
+    addressFormData.append("fullName", form.fullName);
+    addressFormData.append("phone", form.phone);
+    addressFormData.append("address", form.address);
+    addressFormData.append("city", form.city);
+    addressFormData.append("region", form.region);
+    addressFormData.append("country", form.country);
+    addressFormData.append("postalCode", form.postalCode);
+
+    
+    const { data } = await axios.post("/api/address", addressFormData);
+    if(data){
+      
     }
 
     resetForm();

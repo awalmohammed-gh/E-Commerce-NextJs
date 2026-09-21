@@ -22,6 +22,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import axios from "axios";
+import Toast from "@/ui/Toast";
 
 export default function Navbar() {
   const router = useRouter();
@@ -29,6 +31,12 @@ export default function Navbar() {
   const [openUser, setOpenUser] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
   const [openCategories, setOpenCategories] = useState(false);
+    const [toast, setToast] = useState({
+      message: "",
+      success: false,
+      error: false,
+    });
+
 
   // Get the cart counter from context
   const { handleCartCount, addItems, user, isLoggedIn } = useEcommerce();
@@ -38,6 +46,13 @@ export default function Navbar() {
 
   const userRef = useRef(null);
   const categoriesRef = useRef(null);
+  
+    const showSuccess = (message) =>
+      setToast({ message, success: true, error: false });
+    const showError = (message) =>
+      setToast({ message, success: false, error: true });
+    const clearToast = () =>
+      setToast({ message: "", success: false, error: false });
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -64,6 +79,25 @@ export default function Navbar() {
       document.removeEventListener("keydown", handleEsc);
     };
   }, []);
+
+
+  const handleLogout = async() =>{
+    try {
+      const {data} = await axios.post("/api/auth/logout");
+      if(data.success){
+         showSuccess(data.message);
+         router.push("signup")
+      }else{
+        showError(data.message)
+      }
+    } catch (error) {
+            const message =
+              error?.response?.data?.message ||
+              "Something went wrong. Please try again.";
+
+            showError(message);
+    }
+  }
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -312,7 +346,7 @@ export default function Navbar() {
                           className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                           onClick={() => {
                             setOpenUser(false);
-                            // TODO: logout
+                            handleLogout();
                           }}
                         >
                           <LogOut className="w-4 h-4" />
@@ -481,7 +515,7 @@ export default function Navbar() {
                           className="bg-red-600 text-white text-center px-4 py-2.5 rounded-full text-sm font-medium hover:bg-red-700 transition-colors"
                           onClick={() => {
                             setOpenMenu(false);
-                            // TODO: logout
+                            handleLogout();
                           }}
                         >
                           Sign Out
@@ -512,6 +546,16 @@ export default function Navbar() {
           )}
         </AnimatePresence>
       </div>
+      <div className="fixed top-6 right-6 z-200 pointer-events-none">
+              <div className="pointer-events-auto">
+                <Toast
+                  success={toast.success}
+                  error={toast.error}
+                  message={toast.message}
+                  onClose={clearToast}
+                />
+              </div>
+            </div>
     </header>
   );
 }

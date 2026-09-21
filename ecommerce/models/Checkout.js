@@ -13,6 +13,8 @@ const checkoutSchema = new mongoose.Schema(
       required: true,
     },
 
+    totalAmount:{type:Number, required:true},
+
     address: {
       type: Object,
       required: true,
@@ -25,7 +27,7 @@ const checkoutSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["Cash on Delivery", "Mobile Money", "Card"],
+      enum: ["Cash On Delivery", "Mobile Money", "Card"],
       required: true,
     },
     orderStatus: {

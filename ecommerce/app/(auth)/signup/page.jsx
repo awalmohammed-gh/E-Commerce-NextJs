@@ -8,6 +8,7 @@ import { Eye, EyeOff, Mail, Lock, User, Check, ArrowRight } from "lucide-react";
 import LoadingSpinner from "@/ui/LoadingSpinner";
 import Toast from "@/ui/Toast";
 import { useEcommerce } from "@/context/EcommerceContextProvider";
+import axios from "axios";
 
 export default function MySignUp() {
   const router = useRouter();
@@ -106,25 +107,18 @@ export default function MySignUp() {
       formData.append("email", signup.email);
       formData.append("password", signup.password);
 
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        body: formData,
-      });
+      const { data } = await axios.post("/api/auth/signup",formData);
 
-      const data = await response.json();
+        if(data.success){
+          showSuccess(data.message);
+                setIsLoggedIn(true);
+                setSubmitted(true);
+                showSuccess("Account created successfully.");
+                router.push("/");
+        }else{
+           showError(data.message || "Something went wrong");
+        }
 
-      if (!response.ok) {
-        showError(data.message || "Something went wrong");
-        return;
-      }
-      
-      setIsLoggedIn(true)
-      setSubmitted(true);
-      showSuccess("Account created successfully.");
-
-      setTimeout(() => {
-        router.push("/");
-      }, 1200);
     } catch (error) {
       console.error("Signup error:", error);
       showError("Something went wrong. Please try again.");
@@ -357,7 +351,7 @@ export default function MySignUp() {
             <p className="text-sm text-[#4A463F] text-center mt-6">
               Already have an account?{" "}
               <Link
-                href="/signin"
+                href="/login"
                 className="font-semibold text-[#1C1A17] hover:text-[#D98880] transition-colors underline underline-offset-4"
               >
                 Sign in
@@ -375,7 +369,7 @@ export default function MySignUp() {
       </main>
 
       {/* Toast */}
-      <div className="fixed bottom-6 right-6 z-200 pointer-events-none">
+      <div className="fixed top-6 right-6 z-200 pointer-events-none">
         <div className="pointer-events-auto">
           <Toast
             success={toast.success}

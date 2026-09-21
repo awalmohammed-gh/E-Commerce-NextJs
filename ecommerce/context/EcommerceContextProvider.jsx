@@ -8,27 +8,26 @@ const EcommerceContext = createContext();
 
 export const EcommerceContextProvider = ({ children }) => {
   const [addItems, setAddItems] = useState({});
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [products, setProducts] = useState([]);
-  
 
   /* Add a new address - returns the created address */
- const addAddress = (data) => {
-   const id = `addr-${Date.now()}`;
+  const addAddress = (data) => {
+    const id = `addr-${Date.now()}`;
 
-   const next = { ...data, id };
+    const next = { ...data, id };
 
-   setAddresses((prev) => [...prev, next]);
+    setAddresses((prev) => [...prev, next]);
 
-   if (!selectedAddressId) {
-     setSelectedAddressId(id);
-   }
+    if (!selectedAddressId) {
+      setSelectedAddressId(id);
+    }
 
-   return next;
- };
+    return next;
+  };
 
   /* Update an existing address */
   const updateAddress = (id, data) => {
@@ -56,26 +55,50 @@ export const EcommerceContextProvider = ({ children }) => {
   /* ---------------------------------------------------------
      Cart logic - unchanged
   --------------------------------------------------------- */
-const handleAddToCart = async (itemId, size) => {
-  try {
-    const { data } = await axios.post("/api/add-to-cart", {
-      itemId,
-      size,
-    });
 
-    if (data.success) {
-      setAddItems((prev) => ({
-        ...prev,
-        [itemId]: {
-          ...prev[itemId],
-          [size]: (prev[itemId]?.[size] || 0) + 1,
-        },
-      }));
+  const handleAddToCart = async (itemId, size) => {
+    try {
+      const { data } = await axios.post("/api/add-to-cart", {
+        itemId,
+        size,
+      });
+
+      if (data.success) {
+        setAddItems(data.cartData || {});
+      } else {
+        console.error(data.message);
+      }
+    } catch (error) {
+      console.error(
+        error.response?.data?.message || "Could not add item to cart",
+      );
     }
-  } catch (error) {
-    console.error("Add to cart error:", error);
-  }
-};
+  };
+  // const handleAddToCart = async (itemId, size) => {
+
+  //    setAddItems((prev) => ({
+  //      ...prev,
+  //      [itemId]: {
+  //        ...prev[itemId],
+  //        [size]: (prev[itemId]?.[size] || 0) + 1,
+  //      },
+  //    }));
+
+  //   try {
+  //     const { data } = await axios.post("/api/add-to-cart", {
+  //       itemId,
+  //       size,
+  //     });
+
+  //     if (data.success) {
+  //        console.log(data.message);
+  //     }else{
+  //       console.log(data.message);
+  //     }
+  //   } catch (error) {
+  //     console.error("Add to cart error:", error);
+  //   }
+  // };
 
   const handleRemoveFromCart = (productId, size) => {
     setAddItems((prev) => ({
@@ -111,22 +134,21 @@ const handleAddToCart = async (itemId, size) => {
     return count;
   };
 
+  const totalAmount = useMemo(() => {
+    let total = 0;
 
-const totalAmount = useMemo(() => {
-  let total = 0;
+    for (const productId in addItems) {
+      const product = products.find((item) => item._id === productId);
 
-  for (const productId in addItems) {
-    const product = products.find((item) => item._id === productId);
-
-    if (product) {
-      for (const size in addItems[productId]) {
-        total += product.price * addItems[productId][size];
+      if (product) {
+        for (const size in addItems[productId]) {
+          total += product.price * addItems[productId][size];
+        }
       }
     }
-  }
 
-  return total;
-}, [addItems, products]);
+    return total;
+  }, [addItems, products]);
 
   const deleteItemFromCart = (productId, size) => {
     setAddItems((prev) => {
@@ -143,12 +165,11 @@ const totalAmount = useMemo(() => {
     });
   };
 
-
   //fetch all products
-  useEffect(() =>{
-    const fetchProduct = async() =>{
+  useEffect(() => {
+    const fetchProduct = async () => {
       try {
-        const {data} = await axios.get("/api/list");
+        const { data } = await axios.get("/api/list");
         if (data.success) {
           setProducts(data.list);
         } else {
@@ -157,34 +178,51 @@ const totalAmount = useMemo(() => {
       } catch (error) {
         console.error(error);
       }
-    }
+    };
 
-    fetchProduct()
-  },[])
-
+    fetchProduct();
+  }, []);
 
   // check if is the user
 
-useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      const { data } = await axios.get("/api/auth/is-me");
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data } = await axios.get("/api/auth/is-me");
 
-      if (data.success) {
-        setUser(data.user);
-        setIsLoggedIn(true);
-      } else {
+        if (data.success) {
+          setUser(data.user);
+          setIsLoggedIn(true);
+        } else {
+          setUser(null);
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
         setUser(null);
         setIsLoggedIn(false);
       }
-    } catch (error) {
-      setUser(null);
-      setIsLoggedIn(false);
-    }
-  };
+    };
 
-  checkAuth();
-}, []);
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const fetchUserCart = async () => {
+      try {
+        const { data } = await axios.get("/api/get-user-cart");
+
+        if (data.success) {
+          setAddItems(data.cartData || {});
+        } else {
+          console.error(data.message);
+        }
+      } catch (error) {
+        console.error(error.response?.data?.message || "Could not load cart");
+      }
+    };
+
+    fetchUserCart();
+  }, []);
 
   /* ---------------------------------------------------------
      Context value
@@ -192,6 +230,7 @@ useEffect(() => {
   const commerceValue = {
     // Cart
     addItems,
+    setAddItems,
     handleAddToCart,
     handleRemoveFromCart,
     getItemQuantity,
@@ -212,7 +251,7 @@ useEffect(() => {
     setUser,
     isLoggedIn,
     setIsLoggedIn,
-    products
+    products,
   };
 
   return (

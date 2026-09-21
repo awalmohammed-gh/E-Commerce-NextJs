@@ -1,21 +1,17 @@
 import mongoose from "mongoose";
-import dns from "dns";
 
-dns.setServers(["1.1.1.1","8.8.8.8"]);
-
-export const connectMongodb = async () => {
-  try {
-    if (mongoose.connection.readyState === 1) {
-      return mongoose.connection;
-    }
-
-    await mongoose.connect(`${process.env.MONGODB_URI}/eleoka-shop`);
-
-    console.log("MongoDB is connected");
-
+export async function connectMongodb() {
+  if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
-  } catch (error) {
-    console.error("MongoDB connection error:", error);
-    throw error;
   }
-};
+
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error("MONGODB_URI is not set");
+
+  await mongoose.connect(uri, {
+    dbName: "eleoka-shop",
+    serverSelectionTimeoutMS: 10_000,
+  });
+
+  return mongoose.connection;
+}
