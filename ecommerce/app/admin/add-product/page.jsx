@@ -134,6 +134,9 @@ export default function AddProduct() {
 
     try {
       setLoading(true);
+      const sizesForSubmission = sizeInput.trim()
+        ? [...new Set([...sizes, sizeInput.trim()])]
+        : sizes;
 
       const formData = new FormData();
       formData.append("name", form.name);
@@ -145,7 +148,7 @@ export default function AddProduct() {
       formData.append("stock", form.stock || 0);
       formData.append("bestseller", form.bestseller);
       formData.append("newArrival", form.newArrival);
-      formData.append("sizes", JSON.stringify(sizes));
+      formData.append("sizes", JSON.stringify(sizesForSubmission));
 
       images.forEach((image) => formData.append("images", image));
 

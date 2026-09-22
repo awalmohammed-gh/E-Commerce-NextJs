@@ -13,8 +13,6 @@ const checkoutSchema = new mongoose.Schema(
       required: true,
     },
 
-    totalAmount:{type:Number, required:true},
-
     address: {
       type: Object,
       required: true,
@@ -30,6 +28,12 @@ const checkoutSchema = new mongoose.Schema(
       enum: ["Cash On Delivery", "Mobile Money", "Card"],
       required: true,
     },
+
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
+
     orderStatus: {
       type: String,
       enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
@@ -39,5 +43,5 @@ const checkoutSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-
-export const Checkout = mongoose.models.Checkout || mongoose.model("Checkout", checkoutSchema)
+export const Checkout =
+  mongoose.models.Checkout || mongoose.model("Checkout", checkoutSchema);

@@ -23,6 +23,9 @@ export async function POST(request) {
     const body = await request.json();
     const { items, address, paymentMethod,totalAmount } = body;
 
+    console.log("BODY:", body);
+    console.log("TOTAL AMOUNT RECEIVED:", totalAmount);
+
     // 3. Validate required fields
     if (!items || !address || !paymentMethod) {
       return NextResponse.json(
@@ -52,7 +55,7 @@ export async function POST(request) {
       address,
       paymentMethod, // from client, validated
       payment: paymentMethod !== "Cash On Delivery",
-      totalAmount
+      totalAmount:Number(totalAmount)
       
     });
 

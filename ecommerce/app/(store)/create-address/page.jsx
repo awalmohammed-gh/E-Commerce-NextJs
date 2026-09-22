@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Check, ArrowLeft, Trash2, Pencil, Plus } from "lucide-react";
+import {
+  MapPin,
+  Check,
+  ArrowLeft,
+  Trash2,
+  Pencil,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import { useEcommerce } from "@/context/EcommerceContextProvider";
 import Toast from "@/ui/Toast";
 import axios from "axios";
@@ -16,9 +24,12 @@ export default function CreateAddress() {
     updateAddress,
     deleteAddress,
     selectAddress,
+    setAddresses,
   } = useEcommerce();
 
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const editingAddress = editingId
     ? addresses.find((a) => a.id === editingId) || null
@@ -49,6 +60,42 @@ export default function CreateAddress() {
   const clearToast = () =>
     setToast({ message: "", success: false, error: false });
 
+  /* Only load once — even if setAddresses identity changes */
+  const didLoadRef = useRef(false);
+
+  useEffect(() => {
+    if (didLoadRef.current) return;
+    didLoadRef.current = true;
+
+    const loadAddresses = async () => {
+      try {
+        const { data } = await axios.get("/api/address");
+
+        if (data.success && Array.isArray(data.addresses)) {
+          const normalised = data.addresses.map((a) => ({
+            id: a._id,
+            fullName: a.fullName,
+            phone: a.phone,
+            address: a.address,
+            city: a.city,
+            region: a.region,
+            country: a.country,
+            postalCode: a.postalCode,
+            isDefault: a.isDefault,
+          }));
+
+          if (typeof setAddresses === "function") {
+            setAddresses(normalised);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load addresses:", error);
+      }
+    };
+
+    loadAddresses();
+  }, [setAddresses]);
+
   /* Reset form */
   const resetForm = (addr = null) => {
     setForm({
@@ -75,39 +122,83 @@ export default function CreateAddress() {
     if (!form.phone.trim()) next.phone = "Phone number is required";
     if (!form.address.trim()) next.address = "Street address is required";
     if (!form.city.trim()) next.city = "City is required";
-    if (!form.region.trim()) next.region = "Region is required";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = async(e) => {
+  /* ---------------------------------------------------------
+     Save (create or update)
+  --------------------------------------------------------- */
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validate()) {
       showError("Please fix the errors below.");
       return;
     }
-    const addressFormData = new FormData();
 
-    addressFormData.append("fullName", form.fullName);
-    addressFormData.append("phone", form.phone);
-    addressFormData.append("address", form.address);
-    addressFormData.append("city", form.city);
-    addressFormData.append("region", form.region);
-    addressFormData.append("country", form.country);
-    addressFormData.append("postalCode", form.postalCode);
+    try {
+      setSaving(true);
 
-    
-    const { data } = await axios.post("/api/address", addressFormData);
-    if(data){
-      
+      const payload = {
+        fullName: form.fullName,
+        phone: form.phone,
+        address: form.address,
+        city: form.city,
+        region: form.region,
+        country: form.country,
+        postalCode: form.postalCode,
+      };
+
+      if (editingAddress) {
+        const { data } = await axios.put(
+          `/api/address/${editingAddress.id}`,
+          payload,
+        );
+
+        if (!data.success) {
+          throw new Error(data.message || "Failed to update address");
+        }
+
+        updateAddress(editingAddress.id, payload);
+        showSuccess("Address updated.");
+        setEditingId(null);
+      } else {
+        const { data } = await axios.post("/api/address", payload);
+
+        if (!data.success) {
+          throw new Error(data.message || "Failed to save address");
+        }
+
+        addAddress({
+          ...payload,
+          id: data.address?._id || data.address?.id,
+          isDefault: data.address?.isDefault,
+        });
+
+        showSuccess("Address added.");
+      }
+
+      resetForm();
+    } catch (error) {
+      console.error(error);
+      const message =
+        error?.response?.data?.message ||
+        error.message ||
+        "Something went wrong.";
+      showError(message);
+    } finally {
+      setSaving(false);
     }
-
-    resetForm();
   };
 
+  /* ---------------------------------------------------------
+     Edit
+  --------------------------------------------------------- */
   const handleEdit = (addr) => {
     setEditingId(addr.id);
     resetForm(addr);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCancelEdit = () => {
@@ -115,17 +206,40 @@ export default function CreateAddress() {
     resetForm();
   };
 
-  const handleDelete = (id) => {
-    deleteAddress(id);
-    showSuccess("Address removed.");
-    if (editingId === id) {
-      setEditingId(null);
-      resetForm();
+  /* ---------------------------------------------------------
+     Delete
+  --------------------------------------------------------- */
+  const handleDelete = async (id) => {
+    try {
+      setDeletingId(id);
+
+      const { data } = await axios.delete(`/api/address/${id}`);
+
+      if (data && !data.success) {
+        throw new Error(data.message || "Failed to delete address");
+      }
+
+      deleteAddress(id);
+      showSuccess("Address removed.");
+
+      if (editingId === id) {
+        setEditingId(null);
+        resetForm();
+      }
+    } catch (error) {
+      console.error(error);
+      const message =
+        error?.response?.data?.message ||
+        error.message ||
+        "Failed to delete address";
+      showError(message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const inputBase =
-    "w-full text-sm text-[#1C1A17] bg-[#F7F4EE] border rounded-2xl px-4 py-3.5 outline-none transition-all duration-300 placeholder:text-[#8A6A52]/50 focus:bg-white focus:ring-4";
+    "w-full text-sm text-[#1C1A17] bg-[#F7F4EE] border rounded-2xl px-4 py-3.5 outline-none transition-all duration-300 placeholder:text-[#8A6A52]/50 focus:bg-white focus:ring-4 disabled:opacity-60";
   const inputOk =
     "border-[#E5DDD1] focus:border-[#1C1A17] focus:ring-[#1C1A17]/5";
   const inputErr = "border-red-400 focus:border-red-500 focus:ring-red-500/5";
@@ -187,6 +301,7 @@ export default function CreateAddress() {
                   placeholder="Eleoka"
                   value={form.fullName}
                   onChange={handleChange}
+                  disabled={saving}
                   className={`${inputBase} ${
                     errors.fullName ? inputErr : inputOk
                   }`}
@@ -209,6 +324,7 @@ export default function CreateAddress() {
                   placeholder="+233 55 123 4567"
                   value={form.phone}
                   onChange={handleChange}
+                  disabled={saving}
                   className={`${inputBase} ${
                     errors.phone ? inputErr : inputOk
                   }`}
@@ -229,6 +345,7 @@ export default function CreateAddress() {
                   placeholder="House number, street, landmark"
                   value={form.address}
                   onChange={handleChange}
+                  disabled={saving}
                   className={`${inputBase} ${
                     errors.address ? inputErr : inputOk
                   }`}
@@ -252,6 +369,7 @@ export default function CreateAddress() {
                     placeholder="Accra"
                     value={form.city}
                     onChange={handleChange}
+                    disabled={saving}
                     className={`${inputBase} ${
                       errors.city ? inputErr : inputOk
                     }`}
@@ -271,15 +389,9 @@ export default function CreateAddress() {
                     placeholder="Greater Accra"
                     value={form.region}
                     onChange={handleChange}
-                    className={`${inputBase} ${
-                      errors.region ? inputErr : inputOk
-                    }`}
+                    disabled={saving}
+                    className={`${inputBase} ${inputOk}`}
                   />
-                  {errors.region && (
-                    <p className="text-xs text-red-500 mt-1.5">
-                      {errors.region}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -295,6 +407,7 @@ export default function CreateAddress() {
                     placeholder="Ghana"
                     value={form.country}
                     onChange={handleChange}
+                    disabled={saving}
                     className={`${inputBase} ${inputOk}`}
                   />
                 </div>
@@ -309,6 +422,7 @@ export default function CreateAddress() {
                     placeholder="GA-123-4567"
                     value={form.postalCode}
                     onChange={handleChange}
+                    disabled={saving}
                     className={`${inputBase} ${inputOk}`}
                   />
                 </div>
@@ -320,7 +434,8 @@ export default function CreateAddress() {
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="w-full sm:w-auto text-center text-sm font-medium text-[#4A463F] hover:text-[#1C1A17] px-6 py-3 rounded-full transition-colors duration-300"
+                    disabled={saving}
+                    className="w-full sm:w-auto text-center text-sm font-medium text-[#4A463F] hover:text-[#1C1A17] px-6 py-3 rounded-full transition-colors duration-300 disabled:opacity-60"
                   >
                     Cancel edit
                   </button>
@@ -328,11 +443,17 @@ export default function CreateAddress() {
 
                 <motion.button
                   type="submit"
+                  disabled={saving}
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1C1A17] text-[#F5F1EA] px-8 py-3.5 rounded-full font-medium text-sm shadow-[0_4px_16px_rgba(28,26,23,0.18)] hover:bg-[#332F29] hover:shadow-[0_6px_20px_rgba(28,26,23,0.24)] transition-all duration-300"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1C1A17] text-[#F5F1EA] px-8 py-3.5 rounded-full font-medium text-sm shadow-[0_4px_16px_rgba(28,26,23,0.18)] hover:bg-[#332F29] hover:shadow-[0_6px_20px_rgba(28,26,23,0.24)] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {editingAddress ? (
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : editingAddress ? (
                     <>
                       <Check className="w-4 h-4" />
                       Update address
@@ -379,6 +500,7 @@ export default function CreateAddress() {
                     {addresses.map((addr) => {
                       const isSelected = addr.id === selectedAddressId;
                       const isEditing = addr.id === editingId;
+                      const isDeleting = addr.id === deletingId;
 
                       return (
                         <motion.div
@@ -389,6 +511,8 @@ export default function CreateAddress() {
                           exit={{ opacity: 0, x: -30 }}
                           transition={{ duration: 0.25, ease: "easeOut" }}
                           className={`rounded-2xl px-5 py-4 transition-all duration-300 border hover:shadow-[0_4px_16px_rgba(28,26,23,0.05)] ${
+                            isDeleting ? "opacity-40 pointer-events-none" : ""
+                          } ${
                             isEditing
                               ? "bg-[#D98880]/5 border-[#D98880]/30"
                               : isSelected
@@ -453,6 +577,7 @@ export default function CreateAddress() {
                               <button
                                 type="button"
                                 onClick={() => handleEdit(addr)}
+                                disabled={isDeleting}
                                 className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-300 ${
                                   isSelected
                                     ? "text-[#F5F1EA]/60 hover:text-[#F5F1EA] hover:bg-white/10"
@@ -466,6 +591,7 @@ export default function CreateAddress() {
                               <button
                                 type="button"
                                 onClick={() => handleDelete(addr.id)}
+                                disabled={isDeleting}
                                 className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-300 ${
                                   isSelected
                                     ? "text-[#F5F1EA]/60 hover:text-red-400 hover:bg-white/10"
@@ -473,7 +599,11 @@ export default function CreateAddress() {
                                 }`}
                                 aria-label="Delete address"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                {isDeleting ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                )}
                               </button>
                             </div>
                           </div>

@@ -3,12 +3,14 @@ import { getAuthUser } from "@/middleware/auth";
 import { Users } from "@/models/User";
 import { NextResponse } from "next/server";
 
+/* ------------------------------------------------------------------
+   POST - add a new address
+------------------------------------------------------------------ */
 export async function POST(request) {
   try {
     await connectMongodb();
 
     const authUser = getAuthUser(request);
-
     if (!authUser) {
       return NextResponse.json(
         { success: false, message: "Not authenticated" },
@@ -38,7 +40,6 @@ export async function POST(request) {
     }
 
     const user = await Users.findById(authUser.id);
-
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found" },
@@ -46,7 +47,6 @@ export async function POST(request) {
       );
     }
 
-    // A user can have only one default address.
     if (isDefault) {
       user.addresses.forEach((item) => {
         item.isDefault = false;
@@ -65,7 +65,6 @@ export async function POST(request) {
     };
 
     user.addresses.push(newAddress);
-
     await user.save();
 
     return NextResponse.json(
@@ -79,7 +78,6 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error("Add address error:", error);
-
     return NextResponse.json(
       { success: false, message: "Could not add address" },
       { status: 500 },
@@ -87,8 +85,46 @@ export async function POST(request) {
   }
 }
 
+/* ------------------------------------------------------------------
+   GET - list the current user's addresses
+------------------------------------------------------------------ */
+export async function GET(request) {
+  try {
+    await connectMongodb();
 
-/* ---------------- UPDATE ---------------- */
+    const authUser = getAuthUser(request);
+    if (!authUser) {
+      return NextResponse.json(
+        { success: false, message: "Not authenticated" },
+        { status: 401 },
+      );
+    }
+
+    const user = await Users.findById(authUser.id).select("addresses");
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, addresses: user.addresses },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Get addresses error:", error);
+    return NextResponse.json(
+      { success: false, message: "Could not retrieve addresses" },
+      { status: 500 },
+    );
+  }
+}
+
+
+/* ------------------------------------------------------------------
+   PUT - update an address by ID
+------------------------------------------------------------------ */
 export async function PUT(request, { params }) {
   try {
     await connectMongodb();
@@ -140,7 +176,6 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // If making this the default, unset the others first
     if (isDefault) {
       user.addresses.forEach((item) => {
         if (item._id.toString() !== id) item.isDefault = false;
@@ -173,7 +208,9 @@ export async function PUT(request, { params }) {
   }
 }
 
-/* ---------------- DELETE ---------------- */
+/* ------------------------------------------------------------------
+   DELETE - remove an address by ID
+------------------------------------------------------------------ */
 export async function DELETE(request, { params }) {
   try {
     await connectMongodb();
@@ -207,7 +244,6 @@ export async function DELETE(request, { params }) {
     const wasDefault = target.isDefault;
     target.deleteOne();
 
-    // If we deleted the default, promote the first remaining address
     if (wasDefault && user.addresses.length > 0) {
       user.addresses[0].isDefault = true;
     }

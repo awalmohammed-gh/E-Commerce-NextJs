@@ -1,24 +1,12 @@
 import { connectMongodb } from "@/lib/mongodb";
-import { getAuthUser } from "@/middleware/auth";
 import { Checkout } from "@/models/Checkout";
 import { NextResponse } from "next/server";
 
-export async function GET(request) {
+export async function GET() {
   try {
     await connectMongodb();
 
-    const authUser = getAuthUser(request);
-
-    if (!authUser) {
-      return NextResponse.json(
-        { success: false, message: "Not authenticated" },
-        { status: 401 },
-      );
-    }
-
-    const orders = await Checkout.find({ user: authUser.id })
-      .sort({ createdAt: -1 })
-      .lean();
+    const orders = await Checkout.find({}).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json({
       success: true,
@@ -29,6 +17,132 @@ export async function GET(request) {
 
     return NextResponse.json(
       { success: false, message: "Could not get orders" },
+      { status: 500 },
+    );
+  }
+}
+
+//delete order
+export async function DELETE(request) {
+  try {
+    await connectMongodb();
+
+    const id = request.nextUrl.searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: "Order ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const order = await Checkout.findByIdAndDelete(id);
+
+    if (!order) {
+      return NextResponse.json(
+        { success: false, message: "Order not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Order deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete order error:", error);
+
+    return NextResponse.json(
+      { success: false, message: "Could not delete order" },
+      { status: 500 },
+    );
+  }
+}
+
+// change order status
+
+export async function PATCH(request) {
+  try {
+    await connectMongodb();
+
+    const id = request.nextUrl.searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: "Order ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const body = await request.json();
+    const { orderStatus, payment } = body;
+
+    const allowedStatuses = ["Processing", "Shipped", "Delivered", "Cancelled"];
+
+    // Validate order status if provided
+    if (orderStatus && !allowedStatuses.includes(orderStatus)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid order status",
+        },
+        { status: 400 },
+      );
+    }
+
+    // Validate payment if provided
+    if (payment !== undefined && typeof payment !== "boolean") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Payment status must be true or false",
+        },
+        { status: 400 },
+      );
+    }
+
+    const updates = {};
+
+    if (orderStatus !== undefined) {
+      updates.orderStatus = orderStatus;
+    }
+
+    if (payment !== undefined) {
+      updates.payment = payment;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Nothing to update",
+        },
+        { status: 400 },
+      );
+    }
+
+    const order = await Checkout.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!order) {
+      return NextResponse.json(
+        { success: false, message: "Order not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Order updated successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Update order error:", error);
+
+    return NextResponse.json(
+      { success: false, message: "Could not update order" },
       { status: 500 },
     );
   }

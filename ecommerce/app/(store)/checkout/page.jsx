@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -80,6 +80,16 @@ export default function MyCheckout() {
   const selectedAddress =
     addresses.find((a) => a.id === selectedAddressId) || null;
 
+  /* ---------------------------------------------------------
+     Auto-select the default address if nothing is selected
+  --------------------------------------------------------- */
+  useEffect(() => {
+    if (!selectedAddressId && addresses.length > 0) {
+      const defaultAddr = addresses.find((a) => a.isDefault) || addresses[0];
+      if (defaultAddr) selectAddress(defaultAddr.id);
+    }
+  }, [addresses, selectedAddressId, selectAddress]);
+
   /* Open modal - blank for new, prefilled for edit */
   const openNewAddress = () => {
     setEditingAddress(null);
@@ -96,14 +106,15 @@ export default function MyCheckout() {
     setEditingAddress(null);
   };
 
-  /* Modal save callback */
+  /* Modal already shows its own toast — this is just a hook for side effects */
   const handleAddressSaved = (addr, action) => {
-    if (action === "added") showSuccess("Address added.");
-    if (action === "updated") showSuccess("Address updated.");
-    if (action === "deleted") showSuccess("Address removed.");
+    // Optional: track analytics, log, or react to specific actions here.
+    // The modal already handles success toasts, so no duplicate toast needed.
   };
 
-  /* Place order */
+  /* ---------------------------------------------------------
+     Place order
+  --------------------------------------------------------- */
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       showError("Please select a delivery address.");
@@ -121,22 +132,24 @@ export default function MyCheckout() {
     try {
       setPlacing(true);
 
-      const orderItems = {
-        address: selectedAddress,
+      const { data } = await axios.post("/api/checkout", {
         items: addItems,
-        totalAmount: total,
+        address: selectedAddress,
         paymentMethod,
-      };
-      const {data} = await axios.post("/api/checkout", orderItems);
-      if(data.success){
+        totalAmount: total,
+      });
+
+      if (data.success) {
         showSuccess("Order placed successfully.");
-        router.push("/orders");
-        setAddItems({})
-      }else{
-        showError(data.message)
+        setAddItems({});
+        setTimeout(() => router.push("/orders"), 600);
+      } else {
+        showError(data.message || "Failed to place order");
       }
     } catch (err) {
-      showError(err.message || "Something went wrong.");
+      const message =
+        err?.response?.data?.message || err.message || "Something went wrong.";
+      showError(message);
     } finally {
       setPlacing(false);
     }

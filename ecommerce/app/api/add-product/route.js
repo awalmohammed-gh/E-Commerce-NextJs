@@ -36,7 +36,19 @@ export async function POST(request) {
        const price = formData.get("price");
        const category = formData.get("category");
        const stock = formData.get("stock");
-       const sizes = formData.get("sizes")
+       const sizesValue = formData.get("sizes");
+       let sizes = [];
+
+       try {
+         const parsedSizes = JSON.parse(sizesValue || "[]");
+         if (!Array.isArray(parsedSizes)) throw new Error("Invalid sizes");
+         sizes = [...new Set(parsedSizes.map((size) => String(size).trim()).filter(Boolean))];
+       } catch {
+         return NextResponse.json(
+           { message: "Sizes must be a valid list" },
+           { status: 400 },
+         );
+       }
 
        const images = formData.getAll("images");
 
@@ -68,7 +80,7 @@ export async function POST(request) {
          price: Number(price),
          category,
          subCategory,
-         sizes:JSON.parse(sizes),
+         sizes,
          stock: Number(stock) || 0,
          images: imageUrls,
        });
