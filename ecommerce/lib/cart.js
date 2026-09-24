@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Product } from "@/models/Product";
-import { DEFAULT_SIZE, DELIVERY_FEE, getUnitPrice } from "@/lib/pricing";
+import { DEFAULT_SIZE, getUnitPrice } from "@/lib/pricing";
+import { getDeliveryFee } from "@/lib/settings";
 
 /*
   The cart is stored on the user as { [productId]: { [size]: quantity } }.
@@ -111,7 +112,8 @@ export async function priceCart(cartData) {
 
   const subtotal = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const deliveryFee = itemCount > 0 ? DELIVERY_FEE : 0;
+  // Current admin setting; the order stores a copy, so later changes never touch it
+  const deliveryFee = itemCount > 0 ? await getDeliveryFee() : 0;
 
   return {
     items,

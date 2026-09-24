@@ -1,79 +1,208 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search,
-  Trash2,
-  Package,
-  Loader2,
-  AlertCircle,
-  ExternalLink,
-  RefreshCw,
-} from "lucide-react";
-import Toast from "@/ui/Toast";
-import ConfirmDialog from "@/ui/ConfirmDialog";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ExternalLink, Package, PackagePlus, Pencil, RefreshCw, SearchX, Trash2 } from "lucide-react";
+import { formatCedis } from "@/lib/formatCurrency";
+import { formatDate } from "@/lib/formatDate";
+import { stockLevel } from "@/lib/orderStatus";
+import PageHeader from "@/components/admin/ui/PageHeader";
+import Button from "@/components/admin/ui/Button";
+import Badge, { StockBadge } from "@/components/admin/ui/Badge";
+import { Card } from "@/components/admin/ui/Card";
+import SearchInput from "@/components/admin/ui/SearchInput";
+import { Select } from "@/components/admin/ui/Field";
+import { TABLE, TD, TH, TR } from "@/components/admin/ui/Table";
+import { ConfirmDialog } from "@/components/admin/ui/Dialog";
+import { useToast } from "@/components/admin/ui/Toast";
+import { EmptyState, ErrorState, InlineAlert, Skeleton, friendlyError } from "@/components/admin/ui/States";
 
-export default function ProductList() {
+const STOCK_FILTERS = [
+  { value: "all", label: "Any stock" },
+  { value: "attention", label: "Needs attention" },
+  { value: "in", label: "In stock" },
+  { value: "low", label: "Low stock" },
+  { value: "out", label: "Out of stock" },
+];
+
+const matchesStock = (product, filter) => {
+  if (filter === "all") return true;
+  const level = stockLevel(product.stock);
+  if (filter === "attention") return level === "low" || level === "out";
+  return level === filter;
+};
+
+const hasOffer = (p) => Number(p.offerPrice) > 0 && Number(p.offerPrice) < Number(p.price);
+
+const productId = (p) => p._id || p.id;
+
+/* ------------------------------------------------------------------
+   Small pieces
+------------------------------------------------------------------ */
+function Thumb({ product, size = "h-12 w-10" }) {
+  return (
+    <div className={`relative shrink-0 overflow-hidden rounded border border-line bg-paper ${size}`}>
+      {product.images?.[0] ? (
+        <Image src={product.images[0]} alt="" fill sizes="48px" className="object-cover" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <Package className="h-4 w-4 text-muted" aria-hidden="true" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Price({ product }) {
+  if (!hasOffer(product)) {
+    return <span className="font-medium text-ink tabular-nums">{formatCedis(product.price)}</span>;
+  }
+
+  const off = Math.round((1 - Number(product.offerPrice) / Number(product.price)) * 100);
+
+  return (
+    <span className="inline-flex flex-wrap items-baseline gap-x-2 tabular-nums">
+      <span className="font-medium text-ink">{formatCedis(product.offerPrice)}</span>
+      <span className="text-xs text-muted line-through">
+        <span className="sr-only">was </span>
+        {formatCedis(product.price)}
+      </span>
+      <span className="text-xs font-medium text-rose-deep">-{off}%</span>
+    </span>
+  );
+}
+
+function Flags({ product }) {
+  if (!product.bestseller && !product.newArrival) return null;
+  return (
+    <span className="mt-1 flex flex-wrap gap-1">
+      {product.bestseller && (
+        <Badge tone="accent" dot={false}>
+          Bestseller
+        </Badge>
+      )}
+      {product.newArrival && <Badge dot={false}>New arrival</Badge>}
+    </span>
+  );
+}
+
+function RowActions({ product, deleting, onDelete }) {
+  const id = productId(product);
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <Button size="sm" icon={Pencil} href={`/admin/edit-product/${id}`} aria-label={`Edit ${product.name}`}>
+        Edit
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        icon={ExternalLink}
+        href={`/product/${id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`View ${product.name} in the store (opens in a new tab)`}
+      >
+        View
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        icon={Trash2}
+        onClick={() => onDelete(product)}
+        loading={deleting}
+        className="hover:bg-danger-tint hover:text-danger"
+        aria-label={`Delete ${product.name}`}
+      >
+        Delete
+      </Button>
+    </div>
+  );
+}
+
+function ListSkeleton() {
+  return (
+    <Card>
+      <div className="divide-y divide-line">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+            <Skeleton className="h-12 w-10" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-3.5 w-1/3" />
+              <Skeleton className="h-3 w-1/5" />
+            </div>
+            <Skeleton className="hidden h-3.5 w-20 sm:block" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------
+   Page
+------------------------------------------------------------------ */
+function ProductList() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const toast = useToast();
+
   const [listData, setListData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
-  const [isError, setIsError] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
   const [search, setSearch] = useState("");
-
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingId, setPendingId] = useState(null);
-
-  const [toast, setToast] = useState({
-    message: "",
-    success: false,
-    error: false,
+  const [category, setCategory] = useState("all");
+  const [stockFilter, setStockFilter] = useState(() => {
+    const initial = searchParams.get("stock");
+    return STOCK_FILTERS.some((f) => f.value === initial) ? initial : "all";
   });
 
-  const showSuccess = (message) =>
-    setToast({ message, success: true, error: false });
-  const showError = (message) =>
-    setToast({ message, success: false, error: true });
-  const clearToast = () =>
-    setToast({ message: "", success: false, error: false });
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   /* Fetch */
-  const handleFetchList = async () => {
-    try {
-      setIsLoading(true);
-      setIsError(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-      const res = await fetch("/api/list", { method: "GET" });
-      if (res.status === 401 || res.status === 403) {
-        router.replace("/admin/admin-login");
-        return;
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/list", { method: "GET" });
+        if (res.status === 401 || res.status === 403) {
+          router.replace("/admin/admin-login");
+          return;
+        }
+        if (!res.ok) throw Object.assign(new Error("Failed to fetch products"), { status: res.status });
+
+        const data = await res.json();
+        setListData(data.list || []);
+        setLoadError(null);
+        setLoaded(true);
+      } catch (error) {
+        console.error(error);
+        setLoadError(friendlyError(error, "The product list couldn't be loaded."));
+      } finally {
+        setIsLoading(false);
       }
-      if (!res.ok) throw new Error("Failed to fetch products");
+    };
 
-      const data = await res.json();
-      setListData(data.list || []);
-    } catch (error) {
-      console.error(error);
-      setIsError(error);
-      showError(error.message || "Failed to load products");
-    } finally {
-      setIsLoading(false);
-    }
+    load();
+  }, [reloadKey, router]);
+
+  // Refresh / Retry
+  const handleFetchList = () => {
+    setIsLoading(true);
+    setReloadKey((k) => k + 1);
   };
 
   /* Delete */
-  const handleAskDelete = (id) => {
-    setPendingId(id);
-    setConfirmOpen(true);
-  };
-
   const handleConfirmDelete = async () => {
-    const id = pendingId;
-    if (!id) return;
+    const product = pendingDelete;
+    if (!product) return;
+    const id = productId(product);
 
     try {
       setDeletingId(id);
@@ -88,326 +217,282 @@ export default function ProductList() {
         router.replace("/admin/admin-login");
         return;
       }
-      if (!res.ok) throw new Error("Failed to delete product");
+      if (!res.ok) throw Object.assign(new Error("Failed to delete product"), { status: res.status });
 
-      setListData((prev) => prev.filter((p) => (p._id || p.id) !== id));
-      showSuccess("Product deleted.");
+      setListData((prev) => prev.filter((p) => productId(p) !== id));
+      toast.success(`"${product.name}" was deleted.`);
     } catch (error) {
       console.error(error);
-      showError(error.message || "Failed to delete product");
+      toast.error(`Couldn't delete "${product.name}". Please try again.`);
     } finally {
       setDeletingId(null);
-      setConfirmOpen(false);
-      setPendingId(null);
+      setPendingDelete(null);
     }
   };
 
-  const handleCancelDelete = () => {
-    setConfirmOpen(false);
-    setPendingId(null);
-  };
+  /* Derived */
+  const categories = useMemo(
+    () => [...new Set(listData.map((p) => p.category?.trim()).filter(Boolean))].sort(),
+    [listData],
+  );
 
-  useEffect(() => {
-    handleFetchList();
-  }, []);
+  const counts = useMemo(() => {
+    const levels = listData.map((p) => stockLevel(p.stock));
+    return {
+      low: levels.filter((l) => l === "low").length,
+      out: levels.filter((l) => l === "out").length,
+    };
+  }, [listData]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return listData;
 
-    return listData.filter(
-      (p) =>
+    return listData.filter((p) => {
+      const matchesSearch =
+        !q ||
         p.name?.toLowerCase().includes(q) ||
         p.category?.toLowerCase().includes(q) ||
-        p.subCategory?.toLowerCase().includes(q),
-    );
-  }, [listData, search]);
+        p.subCategory?.toLowerCase().includes(q);
+      const matchesCategory = category === "all" || p.category?.trim() === category;
+      return matchesSearch && matchesCategory && matchesStock(p, stockFilter);
+    });
+  }, [listData, search, category, stockFilter]);
 
-  /* Helpers */
-  const formatPrice = (n) =>
-    `GH₵${Number(n || 0).toLocaleString("en-GH", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    })}`;
-
-  const hasOffer = (p) =>
-    p.offerPrice &&
-    Number(p.offerPrice) > 0 &&
-    Number(p.offerPrice) < Number(p.price);
-
-  const stockBadge = (stock) => {
-    const s = Number(stock);
-    if (Number.isNaN(s))
-      return { label: "—", cls: "bg-[#1C1A17]/[0.04] text-[#8A6A52]" };
-    if (s === 0)
-      return { label: "Out of stock", cls: "bg-red-50 text-red-600" };
-    if (s < 5) return { label: `${s} left`, cls: "bg-amber-50 text-amber-600" };
-    return { label: s, cls: "bg-green-50 text-green-700" };
+  const filtersActive = search.trim() || category !== "all" || stockFilter !== "all";
+  const clearFilters = () => {
+    setSearch("");
+    setCategory("all");
+    setStockFilter("all");
   };
+
+  /* Render */
+  const summary = loaded ? (
+    <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-muted">
+      <span>
+        <span className="font-medium text-ink tabular-nums">{listData.length}</span>{" "}
+        {listData.length === 1 ? "product" : "products"}
+      </span>
+      {counts.low > 0 && (
+        <span>
+          <span className="font-medium text-warning tabular-nums">{counts.low}</span> low stock
+        </span>
+      )}
+      {counts.out > 0 && (
+        <span>
+          <span className="font-medium text-danger tabular-nums">{counts.out}</span> out of stock
+        </span>
+      )}
+    </p>
+  ) : null;
+
+  let content;
+
+  if (!loaded && isLoading) {
+    content = <ListSkeleton />;
+  } else if (!loaded && loadError) {
+    content = (
+      <Card>
+        <ErrorState title="Couldn't load products" message={loadError} onRetry={handleFetchList} retrying={isLoading} />
+      </Card>
+    );
+  } else if (listData.length === 0) {
+    content = (
+      <Card>
+        <EmptyState
+          icon={Package}
+          title="No products yet"
+          message="Products you add appear here and in the store straight away."
+          action={
+            <Button variant="primary" icon={PackagePlus} href="/admin/add-product">
+              Add your first product
+            </Button>
+          }
+        />
+      </Card>
+    );
+  } else if (filtered.length === 0) {
+    content = (
+      <Card>
+        <EmptyState
+          icon={SearchX}
+          title="No products match"
+          message="Try a different search term, or clear the filters to see every product."
+          action={<Button onClick={clearFilters}>Clear filters</Button>}
+        />
+      </Card>
+    );
+  } else {
+    content = (
+      <Card className="overflow-hidden">
+        {/* Phones: cards */}
+        <ul className="divide-y divide-line md:hidden">
+          {filtered.map((product) => {
+            const id = productId(product);
+            return (
+              <li key={id} className={`p-4 ${deletingId === id ? "opacity-50" : ""}`}>
+                <div className="flex gap-3">
+                  <Thumb product={product} size="h-16 w-14" />
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-2 text-sm font-medium text-ink">{product.name}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted">
+                      {[product.category, product.subCategory].filter(Boolean).join(" · ") || "Uncategorised"}
+                    </p>
+                    <div className="mt-1.5 text-sm">
+                      <Price product={product} />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <StockBadge stock={product.stock} />
+                    <Flags product={product} />
+                  </div>
+                  <RowActions product={product} deleting={deletingId === id} onDelete={setPendingDelete} />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* md and up: table */}
+        <div className="hidden overflow-x-auto md:block">
+          <table className={TABLE}>
+            <thead>
+              <tr>
+                <th scope="col" className={`${TH} border-t-0`}>Product</th>
+                <th scope="col" className={`${TH} border-t-0`}>Category</th>
+                <th scope="col" className={`${TH} border-t-0`}>Price</th>
+                <th scope="col" className={`${TH} border-t-0`}>Stock</th>
+                <th scope="col" className={`${TH} hidden border-t-0 xl:table-cell`}>Added</th>
+                <th scope="col" className={`${TH} border-t-0 text-right`}>
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((product) => {
+                const id = productId(product);
+                return (
+                  <tr key={id} className={`${TR} ${deletingId === id ? "opacity-50" : ""}`}>
+                    <td className={TD}>
+                      <div className="flex min-w-55 items-center gap-3">
+                        <Thumb product={product} />
+                        <div className="min-w-0">
+                          <p className="line-clamp-2 font-medium text-ink">{product.name}</p>
+                          <Flags product={product} />
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`${TD} text-ink-soft`}>
+                      <p className="whitespace-nowrap">{product.category || "—"}</p>
+                      {product.subCategory && <p className="text-xs whitespace-nowrap text-muted">{product.subCategory}</p>}
+                    </td>
+                    <td className={`${TD} whitespace-nowrap`}>
+                      <Price product={product} />
+                    </td>
+                    <td className={TD}>
+                      <StockBadge stock={product.stock} />
+                    </td>
+                    <td className={`${TD} hidden whitespace-nowrap text-ink-soft xl:table-cell`}>
+                      {formatDate(product.createdAt)}
+                    </td>
+                    <td className={TD}>
+                      <RowActions product={product} deleting={deletingId === id} onDelete={setPendingDelete} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {filtersActive && (
+          <p className="border-t border-line px-4 py-2.5 text-xs text-muted sm:px-5">
+            Showing {filtered.length} of {listData.length} products
+          </p>
+        )}
+      </Card>
+    );
+  }
 
   return (
     <>
-      <style jsx global>{`
-        @import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap");
-        .font-utility {
-          font-family: "Work Sans", sans-serif;
-        }
-      `}</style>
-
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-utility font-semibold text-xl text-[#1C1A17]">
-            Product list
-          </h1>
-          <p className="font-utility text-[13px] text-[#8A6A52] mt-0.5">
-            All the dresses and products currently in your catalog
-          </p>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div className="flex items-center gap-2.5 flex-1 bg-white border border-[#1C1A17]/12 rounded-xl px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-[#1C1A17]/10 focus-within:border-[#1C1A17]/40 transition-all">
-          <Search className="w-4 h-4 text-[#8A6A52] shrink-0" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products..."
-            className="w-full bg-transparent outline-none font-utility text-sm text-[#1C1A17] placeholder:text-[#1C1A17]/30"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleFetchList}
-          disabled={isLoading}
-          className="inline-flex items-center justify-center gap-2 bg-white border border-[#1C1A17]/12 hover:border-[#1C1A17]/30 text-[#1C1A17] px-4 py-2.5 rounded-xl font-utility text-sm font-medium transition-colors disabled:opacity-60"
-        >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
-      </div>
-
-      {/* Error */}
-      {isError && (
-        <div className="mb-5 flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 font-utility text-sm">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          {isError.message || "Something went wrong loading the list."}
-        </div>
-      )}
-
-      {/* Content */}
-      {isLoading && listData.length === 0 ? (
-        <div className="py-20 flex items-center justify-center">
-          <Loader2 className="w-5 h-5 text-[#8A6A52] animate-spin" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-[#1C1A17]/8 py-16 px-6 flex flex-col items-center gap-4 text-center">
-          <div className="w-12 h-12 rounded-xl bg-[#1C1A17]/[0.04] flex items-center justify-center">
-            <Package className="w-5 h-5 text-[#8A6A52]" />
-          </div>
-          <div>
-            <p className="font-utility font-semibold text-base text-[#1C1A17]">
-              {listData.length === 0 ? "No products yet" : "No matches"}
-            </p>
-            <p className="font-utility text-sm text-[#8A6A52] mt-1">
-              {listData.length === 0
-                ? "Add your first product to get started."
-                : "Try a different search term."}
-            </p>
-          </div>
-          {listData.length === 0 && (
-            <Link
-              href="/admin/add-product"
-              className="mt-2 inline-flex items-center gap-2 bg-[#1C1A17] text-[#F5F1EA] px-5 py-2.5 rounded-xl font-utility text-sm font-medium hover:bg-[#332F29] transition-colors"
-            >
+      <PageHeader
+        title="Products"
+        actions={
+          <>
+            <Button icon={RefreshCw} onClick={handleFetchList} loading={isLoading && loaded} disabled={isLoading}>
+              Refresh
+            </Button>
+            <Button variant="primary" icon={PackagePlus} href="/admin/add-product">
               Add product
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-[#1C1A17]/8 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] border-collapse">
-              <thead>
-                <tr className="border-b border-[#1C1A17]/8">
-                  <th className="text-left font-utility text-xs font-medium text-[#8A6A52] px-6 py-3.5 w-[34%]">
-                    Product
-                  </th>
-                  <th className="text-left font-utility text-xs font-medium text-[#8A6A52] px-4 py-3.5">
-                    Category
-                  </th>
-                  <th className="text-left font-utility text-xs font-medium text-[#8A6A52] px-4 py-3.5">
-                    Price
-                  </th>
-                  <th className="text-left font-utility text-xs font-medium text-[#8A6A52] px-4 py-3.5">
-                    Offer price
-                  </th>
-                  <th className="text-left font-utility text-xs font-medium text-[#8A6A52] px-4 py-3.5">
-                    Stock
-                  </th>
-                  <th className="text-right font-utility text-xs font-medium text-[#8A6A52] px-6 py-3.5">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence initial={false}>
-                  {filtered.map((product) => {
-                    const id = product._id || product.id;
-                    const isDeleting = deletingId === id;
-                    const offer = hasOffer(product);
-                    const stock = stockBadge(product.stock);
+            </Button>
+          </>
+        }
+      >
+        {summary || <p className="mt-1 text-sm text-muted">Everything in your catalog.</p>}
+      </PageHeader>
 
-                    return (
-                      <motion.tr
-                        key={id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: -30 }}
-                        transition={{ duration: 0.2 }}
-                        className={`group border-b border-[#1C1A17]/6 last:border-b-0 hover:bg-[#1C1A17]/[0.02] transition-colors ${
-                          isDeleting ? "opacity-40 pointer-events-none" : ""
-                        }`}
-                      >
-                        {/* Product */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-start gap-3.5 min-w-0">
-                            <div className="relative w-12 h-14 shrink-0 rounded-lg overflow-hidden bg-[#1C1A17]/[0.04] border border-[#1C1A17]/8">
-                              {product.images?.[0] ? (
-                                <Image
-                                  src={product.images[0]}
-                                  alt={product.name}
-                                  fill
-                                  className="object-cover"
-                                  sizes="48px"
-                                  unoptimized
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Package className="w-4 h-4 text-[#8A6A52]" />
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="min-w-0">
-                              <p className="font-utility text-sm font-medium text-[#1C1A17] line-clamp-2 leading-snug">
-                                {product.name}
-                              </p>
-                              {product.subCategory && (
-                                <p className="font-utility text-xs text-[#8A6A52] mt-0.5">
-                                  {product.subCategory}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Category */}
-                        <td className="px-4 py-4">
-                          <p className="font-utility text-sm text-[#4A463F]">
-                            {product.category || "—"}
-                          </p>
-                        </td>
-
-                        {/* Price */}
-                        <td className="px-4 py-4">
-                          <p
-                            className={`font-utility text-sm ${
-                              offer
-                                ? "text-[#8A6A52] line-through"
-                                : "font-semibold text-[#1C1A17]"
-                            }`}
-                          >
-                            {formatPrice(product.price)}
-                          </p>
-                        </td>
-
-                        {/* Offer Price */}
-                        <td className="px-4 py-4">
-                          {offer ? (
-                            <span className="font-utility text-sm font-semibold text-[#1C1A17]">
-                              {formatPrice(product.offerPrice)}
-                            </span>
-                          ) : (
-                            <span className="font-utility text-sm text-[#1C1A17]/25">
-                              —
-                            </span>
-                          )}
-                        </td>
-
-                        {/* Stock badge */}
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-lg font-utility text-xs font-medium ${stock.cls}`}
-                          >
-                            {stock.label}
-                          </span>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <Link
-                              href={`/product/${id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A6A52] hover:text-[#1C1A17] hover:bg-[#1C1A17]/[0.06] transition-colors"
-                              aria-label="View product"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </Link>
-
-                            <button
-                              type="button"
-                              onClick={() => handleAskDelete(id)}
-                              disabled={isDeleting}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A6A52] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                              aria-label="Delete product"
-                            >
-                              {isDeleting ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
+      {loaded && listData.length > 0 && (
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_200px_190px]">
+          <SearchInput
+            className="col-span-2 sm:col-span-1"
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by name or category"
+            label="Search products"
+          />
+          <Select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filter by category">
+            <option value="all">All categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </Select>
+          <Select value={stockFilter} onChange={(e) => setStockFilter(e.target.value)} aria-label="Filter by stock level">
+            {STOCK_FILTERS.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
+          </Select>
         </div>
       )}
 
-      {/* Confirm dialog */}
+      {loaded && loadError && (
+        <div className="mb-4">
+          <InlineAlert>{loadError} Showing the last loaded list.</InlineAlert>
+        </div>
+      )}
+
+      {content}
+
       <ConfirmDialog
-        open={confirmOpen}
+        open={Boolean(pendingDelete)}
         title="Delete this product?"
-        message="This action cannot be undone."
-        confirmText="Yes, delete"
-        cancelText="No, keep it"
+        message={
+          pendingDelete && (
+            <p>
+              <span className="font-medium text-ink">{pendingDelete.name}</span> will be permanently removed from your
+              catalog and the storefront. This can&apos;t be undone.
+            </p>
+          )
+        }
+        confirmLabel="Delete product"
+        cancelLabel="Keep product"
         loading={deletingId !== null}
         onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
+        onCancel={() => setPendingDelete(null)}
       />
-
-      {/* Toast */}
-      <div className="fixed bottom-6 right-6 z-200 pointer-events-none">
-        <div className="pointer-events-auto">
-          <Toast
-            success={toast.success}
-            error={toast.error}
-            message={toast.message}
-            onClose={clearToast}
-          />
-        </div>
-      </div>
     </>
+  );
+}
+
+export default function ProductListPage() {
+  return (
+    <Suspense fallback={<ListSkeleton />}>
+      <ProductList />
+    </Suspense>
   );
 }

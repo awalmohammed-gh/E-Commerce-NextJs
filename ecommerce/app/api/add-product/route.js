@@ -41,6 +41,9 @@ export async function POST(request) {
        const category = formData.get("category");
        const stock = formData.get("stock");
        const sizesValue = formData.get("sizes");
+       // Checkbox flags arrive as the strings "true" / "false"
+       const bestseller = formData.get("bestseller") === "true";
+       const newArrival = formData.get("newArrival") === "true";
        let sizes = [];
 
        try {
@@ -87,6 +90,8 @@ export async function POST(request) {
          sizes,
          stock: Number(stock) || 0,
          images: imageUrls,
+         bestseller,
+         newArrival,
        });
 
        return NextResponse.json(

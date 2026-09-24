@@ -23,6 +23,10 @@ const adminSettingsSchema = new mongoose.Schema(
       currency: { type: String, default: "GHS", uppercase: true, trim: true },
       currencySymbol: { type: String, default: "GH₵", trim: true, maxlength: 5 },
       country: { type: String, default: "Ghana", trim: true, maxlength: 60 },
+      // Flat fee added to every order at checkout, in the store currency.
+      // The single source of truth: cart, checkout and storefront all read it
+      // from here, and each order keeps a copy of the fee it was charged.
+      deliveryFee: { type: Number, default: 25, min: 0, max: 10000 },
       taxEnabled: { type: Boolean, default: false },
       taxPercentage: { type: Number, default: 0, min: 0, max: 100 },
       minimumOrderAmount: { type: Number, default: 0, min: 0 },
@@ -63,6 +67,12 @@ const adminSettingsSchema = new mongoose.Schema(
   },
   { timestamps: true, minimize: false },
 );
+
+// In development, hot reloads keep the previously compiled model; drop it so
+// schema changes (like new settings fields) apply without restarting the server
+if (process.env.NODE_ENV !== "production" && mongoose.models.AdminSettings) {
+  mongoose.deleteModel("AdminSettings");
+}
 
 export const AdminSettings =
   mongoose.models.AdminSettings ||

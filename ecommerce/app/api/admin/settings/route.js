@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { connectMongodb } from "@/lib/mongodb";
 import { requireAdmin } from "@/middleware/adminAuth";
 import {
   getSettings,
   updateSettings,
   SettingsValidationError,
+  STORE_SETTINGS_TAG,
 } from "@/lib/settings";
 import { getAdminSecurityInfo } from "@/lib/adminSession";
 
@@ -56,6 +58,10 @@ export async function PUT(request) {
     await connectMongodb();
 
     const settings = await updateSettings(body);
+
+    // Storefront pages show settings (delivery fee, contact details, payment
+    // methods) from a cache; expire it now so customers see the change at once
+    revalidateTag(STORE_SETTINGS_TAG, { expire: 0 });
 
     return NextResponse.json(
       {

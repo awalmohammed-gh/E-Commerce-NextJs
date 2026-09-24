@@ -9,7 +9,9 @@ export default function StoreFacts({ deliveryFee, paymentMethods = [] }) {
   const facts = [
     {
       icon: Truck,
-      title: `${formatCedis(deliveryFee)} delivery`,
+      // deliveryFee is null when settings couldn't be read
+      title:
+        deliveryFee == null ? "Flat-rate delivery" : deliveryFee > 0 ? `${formatCedis(deliveryFee)} delivery` : "Free delivery",
       text: "One flat fee per order, whatever you buy.",
     },
     {

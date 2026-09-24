@@ -13,6 +13,8 @@ import shopPeach from "@/data/images/shopBanner1.jpg";
 
   image:     static import (gives Next.js the size and a blur placeholder)
   focus:     CSS object-position, keeps the subject in frame when cropped
+  backgroundColor: (hero only) the slide's backdrop; the transparent
+             product cut-outs sit directly on it
   primary / secondary: { label, href } calls to action (secondary optional)
 */
 // Shown in this order: heroBanner1 -> 2 -> 3 -> 4, then back to 1
@@ -25,6 +27,7 @@ export const HERO_SLIDES = [
     image: heroBanner1,
     alt: "Four cropped camisole tops in beige, brown, black and white",
     focus: "50% 50%",
+    backgroundColor: "#ece2d6",
     primary: { label: "Shop tops", href: "/shop?category=tops" },
     secondary: { label: "Browse categories", href: "#categories" },
   },
@@ -36,6 +39,7 @@ export const HERO_SLIDES = [
     image: heroBanner2,
     alt: "A blush and cream handbag set: a tote, a tasselled crossbody bag and a pouch",
     focus: "50% 55%",
+    backgroundColor: "#f5e3e1",
     primary: { label: "Shop bags", href: "/shop?category=accessories" },
     secondary: { label: "Shop new in", href: "/shop?sort=newest" },
   },
@@ -47,6 +51,7 @@ export const HERO_SLIDES = [
     image: heroBanner3,
     alt: "Two shaping tank tops with hook fastenings, one nude and one black",
     focus: "50% 45%",
+    backgroundColor: "#e8e4de",
     primary: { label: "Shop the collection", href: "/shop" },
     secondary: { label: "Our story", href: "/about" },
   },
@@ -58,6 +63,7 @@ export const HERO_SLIDES = [
     image: heroBanner4,
     alt: "Five lace-trimmed camisoles in cream, charcoal, blue, blush and rose",
     focus: "50% 35%",
+    backgroundColor: "#e3e9eb",
     primary: { label: "Shop new in", href: "/shop?sort=newest" },
     secondary: { label: "Browse categories", href: "#categories" },
   },

@@ -1,125 +1,110 @@
 import Link from "next/link";
-import { Eye, BadgeCheck, BadgeX, Package } from "lucide-react";
-import { formatCurrency } from "@/lib/formatCurrency";
+import { ChevronRight, ShoppingBag } from "lucide-react";
+import { formatCedis } from "@/lib/formatCurrency";
 import { formatDate } from "@/lib/formatDate";
-import { ORDER_STATUS_STYLES } from "@/lib/orderStatus";
-import {
-  CARD_CLASS,
-  EmptyState,
-  SectionHeader,
-  Skeleton,
-} from "./DashboardStates";
+import { Card, CardHeader, CardLink, CARD_X } from "@/components/admin/ui/Card";
+import { OrderStatusBadge, PaymentBadge } from "@/components/admin/ui/Badge";
+import { EmptyState, Skeleton } from "@/components/admin/ui/States";
+import { TABLE, TH, TD, TR } from "@/components/admin/ui/Table";
 
-const COLUMNS = ["Order", "Customer", "Total", "Payment", "Status", "Date", ""];
+const orderHref = (id) => `/admin/orders?order=${id}`;
+const shortId = (id) => `#${String(id).slice(-8).toUpperCase()}`;
 
 export default function RecentOrders({ orders = [], loading = false }) {
   return (
-    <section className={`${CARD_CLASS} overflow-hidden`}>
-      <SectionHeader
+    <Card className="h-full" aria-labelledby="recent-orders-title">
+      <CardHeader
+        id="recent-orders-title"
         title="Recent orders"
-        subtitle="The 10 most recent orders"
-        action={
-          <Link
-            href="/admin/orders"
-            className="text-xs font-semibold text-[#1C1A17] hover:text-[#D98880] underline underline-offset-4 transition-colors"
-          >
-            View all
-          </Link>
-        }
+        description="The latest 10 orders"
+        action={<CardLink href="/admin/orders">View all orders</CardLink>}
       />
 
       {loading ? (
-        <div className="px-5 sm:px-6 pb-6 space-y-3">
+        <div className={`${CARD_X} space-y-3 pb-5`}>
           {Array.from({ length: 5 }, (_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+            <Skeleton key={i} className="h-9 w-full" />
           ))}
         </div>
       ) : orders.length === 0 ? (
         <EmptyState
-          icon={Package}
+          compact
+          icon={ShoppingBag}
           title="No orders yet"
-          message="Orders will appear here as customers buy."
+          message="New orders will show here as soon as customers check out."
         />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead>
-              <tr className="bg-[#FAF8F4] border-y border-[#1C1A17]/5">
-                {COLUMNS.map((col, i) => (
-                  <th
-                    key={i}
-                    scope="col"
-                    className="px-5 sm:px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#8A6A52]"
-                  >
-                    {col || <span className="sr-only">Actions</span>}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1C1A17]/5">
-              {orders.map((order) => (
-                <tr
-                  key={order._id}
-                  className="hover:bg-[#FAF8F4]/60 transition-colors"
+        <>
+          {/* Phones: one tappable row per order */}
+          <ul className="divide-y divide-line border-t border-line md:hidden">
+            {orders.map((order) => (
+              <li key={order._id}>
+                <Link
+                  href={orderHref(order._id)}
+                  className={`flex items-center gap-3 ${CARD_X} py-3 transition-colors hover:bg-ink/2`}
                 >
-                  <td className="px-5 sm:px-6 py-3.5 font-mono font-medium text-[#1C1A17]">
-                    #{order._id.slice(-8)}
-                  </td>
-                  <td className="px-5 sm:px-6 py-3.5 text-[#1C1A17] max-w-[180px] truncate">
-                    {order.customerName || "—"}
-                  </td>
-                  <td className="px-5 sm:px-6 py-3.5 font-semibold text-[#1C1A17] tabular-nums whitespace-nowrap">
-                    {formatCurrency(order.totalAmount)}
-                  </td>
-                  <td className="px-5 sm:px-6 py-3.5">
-                    <span
-                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                        order.isPaid
-                          ? "bg-green-50 text-green-700"
-                          : "bg-amber-50 text-amber-700"
-                      }`}
-                    >
-                      {order.isPaid ? (
-                        <BadgeCheck className="w-3 h-3" />
-                      ) : (
-                        <BadgeX className="w-3 h-3" />
-                      )}
-                      {order.isPaid ? "Paid" : "Unpaid"}
-                    </span>
-                    {order.paymentMethod && (
-                      <p className="text-[11px] text-[#8A6A52] mt-1 whitespace-nowrap">
-                        {order.paymentMethod}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="truncate text-sm font-medium text-ink">{order.customerName || "Guest"}</p>
+                      <p className="shrink-0 text-sm font-medium text-ink tabular-nums">
+                        {formatCedis(order.totalAmount)}
                       </p>
-                    )}
-                  </td>
-                  <td className="px-5 sm:px-6 py-3.5">
-                    <span
-                      className={`inline-block px-2.5 py-1 rounded-full border text-[11px] font-semibold uppercase tracking-wider ${
-                        ORDER_STATUS_STYLES[order.orderStatus] ||
-                        "bg-[#F7F4EE] text-[#8A6A52] border-[#E5DDD1]"
-                      }`}
-                    >
-                      {order.orderStatus || "Unknown"}
-                    </span>
-                  </td>
-                  <td className="px-5 sm:px-6 py-3.5 text-[#4A463F] whitespace-nowrap">
-                    {formatDate(order.createdAt)}
-                  </td>
-                  <td className="px-5 sm:px-6 py-3.5 text-right">
-                    <Link
-                      href="/admin/orders"
-                      className="inline-flex w-9 h-9 items-center justify-center rounded-full text-[#8A6A52] hover:text-[#1C1A17] hover:bg-[#1C1A17]/5 transition-colors"
-                      aria-label={`View order ${order._id.slice(-8)}`}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Link>
-                  </td>
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted">
+                      <span className="font-mono">{shortId(order._id)}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{formatDate(order.createdAt)}</span>
+                      <OrderStatusBadge status={order.orderStatus} />
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* md and up: table */}
+          <div className="hidden overflow-x-auto md:block">
+            <table className={TABLE}>
+              <thead>
+                <tr>
+                  <th scope="col" className={TH}>Order</th>
+                  <th scope="col" className={TH}>Customer</th>
+                  <th scope="col" className={TH}>Date</th>
+                  <th scope="col" className={TH}>Payment</th>
+                  <th scope="col" className={TH}>Status</th>
+                  <th scope="col" className={`${TH} text-right`}>Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order._id} className={TR}>
+                    <td className={TD}>
+                      <Link
+                        href={orderHref(order._id)}
+                        className="rounded-sm font-mono text-[13px] font-medium text-ink underline decoration-ink/20 underline-offset-4 hover:decoration-ink"
+                      >
+                        {shortId(order._id)}
+                      </Link>
+                    </td>
+                    <td className={`${TD} max-w-45 truncate text-ink`}>{order.customerName || "Guest"}</td>
+                    <td className={`${TD} whitespace-nowrap text-ink-soft`}>{formatDate(order.createdAt)}</td>
+                    <td className={TD}>
+                      <PaymentBadge paid={order.isPaid} />
+                    </td>
+                    <td className={TD}>
+                      <OrderStatusBadge status={order.orderStatus} />
+                    </td>
+                    <td className={`${TD} text-right font-medium whitespace-nowrap text-ink tabular-nums`}>
+                      {formatCedis(order.totalAmount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
-    </section>
+    </Card>
   );
 }

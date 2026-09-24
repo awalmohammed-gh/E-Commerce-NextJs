@@ -1,99 +1,67 @@
-import { Loader2, Save, RotateCcw } from "lucide-react";
-import { CARD_CLASS } from "@/components/admin/dashboard/DashboardStates";
+import { RotateCcw } from "lucide-react";
+import Button from "@/components/admin/ui/Button";
+import { Card, CardHeader, CARD_X } from "@/components/admin/ui/Card";
+import { Field, INPUT, TEXTAREA, describedBy } from "@/components/admin/ui/Field";
 
-// Same input styling as the Create Product form
-const inputBase =
-  "w-full min-w-0 font-utility text-sm text-[#1C1A17] bg-[#F7F4EE] border rounded-xl px-4 py-3 outline-none transition-all placeholder:text-[#8A6A52]/50 focus:bg-white focus:ring-4 disabled:opacity-60";
-const inputOk =
-  "border-[#E5DDD1] focus:border-[#1C1A17] focus:ring-[#1C1A17]/5";
-const inputErr =
-  "border-red-400 focus:border-red-500 focus:ring-red-500/5 bg-red-50/30";
-
-const labelClass =
-  "block font-utility text-[11px] font-semibold uppercase tracking-wider text-[#4A463F] mb-2";
-
-function FieldShell({ id, label, hint, error, children }) {
+/*
+  Settings form controls. Thin wrappers over the admin field primitives
+  that take (value, onChange(value)) so each settings section stays short.
+*/
+export function TextField({ id, label, hint, error, value, onChange, type = "text", suffix, ...props }) {
   return (
-    <div className="min-w-0">
-      <label htmlFor={id} className={labelClass}>
-        {label}
-      </label>
-      {children}
-      {error ? (
-        <p className="text-xs text-red-600 mt-1.5">{error}</p>
-      ) : (
-        hint && <p className="text-xs text-[#8A6A52] mt-1.5">{hint}</p>
-      )}
-    </div>
-  );
-}
-
-export function TextField({
-  id,
-  label,
-  hint,
-  error,
-  value,
-  onChange,
-  type = "text",
-  ...props
-}) {
-  return (
-    <FieldShell id={id} label={label} hint={hint} error={error}>
-      <input
-        id={id}
-        type={type}
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-        className={`${inputBase} ${error ? inputErr : inputOk}`}
-        aria-invalid={Boolean(error)}
-        {...props}
-      />
-    </FieldShell>
+    <Field id={id} label={label} hint={hint} error={error}>
+      <div className="relative">
+        <input
+          id={id}
+          type={type}
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${INPUT} ${suffix ? "pr-16" : ""}`}
+          aria-invalid={Boolean(error)}
+          aria-describedby={describedBy(id, { error, hint })}
+          {...props}
+        />
+        {suffix && (
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[13px] text-muted">
+            {suffix}
+          </span>
+        )}
+      </div>
+    </Field>
   );
 }
 
 export function TextAreaField({ id, label, hint, error, value, onChange, ...props }) {
   return (
-    <FieldShell id={id} label={label} hint={hint} error={error}>
+    <Field id={id} label={label} hint={hint} error={error}>
       <textarea
         id={id}
         rows={4}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
-        className={`${inputBase} resize-none ${error ? inputErr : inputOk}`}
+        className={`${TEXTAREA} resize-y`}
         aria-invalid={Boolean(error)}
+        aria-describedby={describedBy(id, { error, hint })}
         {...props}
       />
-    </FieldShell>
+    </Field>
   );
 }
 
 // Keeps the raw string while typing; the server parses and validates it
-export function NumberField({ suffix, ...props }) {
-  return (
-    <div className="relative">
-      <TextField type="number" inputMode="decimal" {...props} />
-      {suffix && (
-        <span className="absolute right-4 top-[38px] text-xs text-[#8A6A52] pointer-events-none">
-          {suffix}
-        </span>
-      )}
-    </div>
-  );
+export function NumberField(props) {
+  return <TextField type="number" inputMode="decimal" {...props} />;
 }
 
 export function Toggle({ id, label, description, checked, onChange, disabled, error }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-4">
+    <div className="flex items-start justify-between gap-4 py-3.5">
       <div className="min-w-0">
-        <label htmlFor={id} className="text-sm font-medium text-[#1C1A17] cursor-pointer">
+        <label htmlFor={id} className="cursor-pointer text-sm font-medium text-ink">
           {label}
         </label>
-        {description && (
-          <p className="text-xs text-[#8A6A52] mt-0.5">{description}</p>
-        )}
-        {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+        {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
+        {error && <p className="mt-1 text-[13px] text-danger">{error}</p>}
       </div>
 
       <button
@@ -103,13 +71,13 @@ export function Toggle({ id, label, description, checked, onChange, disabled, er
         aria-checked={Boolean(checked)}
         onClick={() => onChange(!checked)}
         disabled={disabled}
-        className={`relative shrink-0 w-11 h-6 rounded-full transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1C1A17]/10 ${
-          checked ? "bg-[#1C1A17]" : "bg-[#E5DDD1]"
+        className={`relative mt-0.5 h-6 w-10 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+          checked ? "bg-ink" : "bg-ink/20"
         }`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0"
+          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+            checked ? "translate-x-4" : "translate-x-0"
           }`}
         />
         <span className="sr-only">{checked ? "On" : "Off"}</span>
@@ -119,73 +87,39 @@ export function Toggle({ id, label, description, checked, onChange, disabled, er
 }
 
 export function ToggleList({ children }) {
-  return <div className="divide-y divide-[#1C1A17]/5">{children}</div>;
+  return <div className="divide-y divide-line">{children}</div>;
 }
 
 /*
-  Card wrapper for one settings section: title, description, content,
-  and a footer with Discard / Save when onSave is given.
+  One settings section: title, description, content, and a footer with
+  Discard / Save when onSave is given.
 */
-export function SettingsCard({
-  title,
-  description,
-  children,
-  dirty = false,
-  saving = false,
-  onSave,
-  onDiscard,
-}) {
+export function SettingsCard({ title, description, children, dirty = false, saving = false, onSave, onDiscard }) {
   return (
-    <section className={`${CARD_CLASS} overflow-hidden`}>
-      <div className="px-5 sm:px-7 pt-5 sm:pt-7 pb-5 border-b border-[#1C1A17]/5">
-        <h2 className="text-lg font-semibold text-[#1C1A17]">{title}</h2>
-        {description && (
-          <p className="text-sm text-[#8A6A52] mt-1">{description}</p>
-        )}
-      </div>
+    <Card>
+      <CardHeader title={title} description={description} border />
 
-      <div className="px-5 sm:px-7 py-5 sm:py-6">{children}</div>
+      <div className={`${CARD_X} py-4 sm:py-5`}>{children}</div>
 
       {onSave && (
-        <div className="flex flex-wrap items-center justify-end gap-3 px-5 sm:px-7 py-4 bg-[#FAF8F4] border-t border-[#1C1A17]/5">
-          {dirty && (
-            <p className="mr-auto text-xs text-[#8A6A52]">Unsaved changes</p>
-          )}
-          <button
-            type="button"
-            onClick={onDiscard}
-            disabled={!dirty || saving}
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#4A463F] hover:text-[#1C1A17] px-4 py-2.5 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <RotateCcw className="w-4 h-4" />
+        <div className={`flex flex-wrap items-center justify-end gap-2 border-t border-line bg-paper ${CARD_X} py-3`}>
+          {dirty && <p className="mr-auto text-[13px] text-warning">Unsaved changes</p>}
+          <Button variant="ghost" icon={RotateCcw} onClick={onDiscard} disabled={!dirty || saving}>
             Discard
-          </button>
+          </Button>
           <PrimaryButton onClick={onSave} disabled={!dirty} loading={saving}>
-            <Save className="w-4 h-4" />
-            Save Changes
+            Save changes
           </PrimaryButton>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 
 export function PrimaryButton({ children, loading, disabled, type = "button", ...props }) {
   return (
-    <button
-      type={type}
-      disabled={disabled || loading}
-      className="inline-flex items-center justify-center gap-2 bg-[#1C1A17] text-[#F5F1EA] px-5 py-2.5 rounded-full text-sm font-medium hover:bg-[#332F29] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      {...props}
-    >
-      {loading ? (
-        <>
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Saving...
-        </>
-      ) : (
-        children
-      )}
-    </button>
+    <Button variant="primary" type={type} loading={loading} loadingText="Saving..." disabled={disabled} {...props}>
+      {children}
+    </Button>
   );
 }

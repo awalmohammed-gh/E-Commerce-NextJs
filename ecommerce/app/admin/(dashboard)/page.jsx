@@ -2,20 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, ShoppingBag, Package, Wallet, AlertCircle } from "lucide-react";
-import {
-  fetchDashboardOverview,
-  getErrorMessage,
-  isRequestCanceled,
-  isUnauthorized,
-} from "@/lib/adminDashboardApi";
-import { formatCurrency } from "@/lib/formatCurrency";
+import axios from "axios";
+import { Package, PackagePlus, RefreshCw, ShoppingBag, Users, Wallet } from "lucide-react";
+import { fetchDashboardOverview, isRequestCanceled, isUnauthorized } from "@/lib/adminDashboardApi";
+import { formatCedis } from "@/lib/formatCurrency";
 import DashboardStatCard from "@/components/admin/dashboard/DashboardStatCard";
 import RecentOrders from "@/components/admin/dashboard/RecentOrders";
 import RecentUsers from "@/components/admin/dashboard/RecentUsers";
 import RevenueChart from "@/components/admin/dashboard/RevenueChart";
 import OrderStatistics from "@/components/admin/dashboard/OrderStatistics";
-import { RetryButton } from "@/components/admin/dashboard/DashboardStates";
+import StockAlerts from "@/components/admin/dashboard/StockAlerts";
+import PageHeader from "@/components/admin/ui/PageHeader";
+import Button from "@/components/admin/ui/Button";
+import { Card } from "@/components/admin/ui/Card";
+import { ErrorState, InlineAlert, friendlyError } from "@/components/admin/ui/States";
 
 const formatCount = (n) => Number(n || 0).toLocaleString("en-GH");
 
@@ -25,6 +25,10 @@ export default function AdminOverview() {
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [products, setProducts] = useState(null);
+  const [productsError, setProductsError] = useState(null);
+
   const [reloadKey, setReloadKey] = useState(0);
 
   const handleUnauthorized = useCallback(() => {
@@ -32,32 +36,44 @@ export default function AdminOverview() {
   }, [router]);
 
   /* ---------------------------------------------------------
-     Fetch overview (stats, recent orders/users, order stats)
+     Overview (stats, recent orders/users, order statistics)
+     and the product list for stock alerts, in parallel
   --------------------------------------------------------- */
   useEffect(() => {
     const controller = new AbortController();
+    const { signal } = controller;
 
-    const load = async () => {
+    const loadOverview = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        const data = await fetchDashboardOverview({
-          signal: controller.signal,
-        });
-        setOverview(data);
+        setOverview(await fetchDashboardOverview({ signal }));
       } catch (err) {
         if (isRequestCanceled(err)) return;
         if (isUnauthorized(err)) return handleUnauthorized();
 
         console.error(err);
-        setError(getErrorMessage(err, "Failed to load dashboard"));
+        setError(friendlyError(err, "The dashboard couldn't be loaded."));
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     };
 
-    load();
+    const loadProducts = async () => {
+      try {
+        setProductsError(null);
+        const { data } = await axios.get("/api/list", { signal });
+        setProducts(data.list || []);
+      } catch (err) {
+        if (isRequestCanceled(err) || isUnauthorized(err)) return;
+
+        console.error(err);
+        setProductsError(friendlyError(err, "Stock levels couldn't be loaded."));
+      }
+    };
+
+    loadOverview();
+    loadProducts();
 
     return () => controller.abort();
   }, [reloadKey, handleUnauthorized]);
@@ -71,26 +87,26 @@ export default function AdminOverview() {
 
   const statCards = [
     {
-      title: "Total Revenue",
-      value: formatCurrency(stats?.totalRevenue),
+      title: "Revenue",
+      value: formatCedis(stats?.totalRevenue),
       icon: Wallet,
       change: changes?.revenue,
-      formatChange: formatCurrency,
+      formatChange: formatCedis,
     },
     {
-      title: "Total Orders",
+      title: "Orders",
       value: formatCount(stats?.totalOrders),
       icon: ShoppingBag,
       change: changes?.orders,
     },
     {
-      title: "Total Customers",
+      title: "Customers",
       value: formatCount(stats?.totalUsers),
       icon: Users,
       change: changes?.users,
     },
     {
-      title: "Total Products",
+      title: "Products",
       value: formatCount(stats?.totalProducts),
       icon: Package,
       change: changes?.products,
@@ -100,79 +116,62 @@ export default function AdminOverview() {
 
   return (
     <>
-      {/* Header */}
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#8A6A52]">
-            Dashboard
-          </p>
-          <h1 className="font-semibold text-3xl sm:text-4xl text-[#1C1A17]">
-            Overview
-          </h1>
-          <p className="text-sm text-[#8A6A52]">
-            How the store is doing at a glance.
-          </p>
-        </div>
+      <PageHeader
+        title="Overview"
+        description="Sales, orders and stock across the store."
+        actions={
+          <>
+            <Button icon={RefreshCw} onClick={reload} loading={loading && Boolean(overview)} disabled={loading}>
+              Refresh
+            </Button>
+            <Button variant="primary" icon={PackagePlus} href="/admin/add-product">
+              Add product
+            </Button>
+          </>
+        }
+      />
 
-        {overview && (
-          <RetryButton onClick={reload} loading={loading} label="Refresh" />
-        )}
-      </div>
-
-      {/* Error: full-page when there's nothing to show, banner otherwise */}
+      {/* Nothing to show yet: one clear error with a retry */}
       {error && !overview ? (
-        <div className="bg-white rounded-3xl border border-[#1C1A17]/5 shadow-[0_1px_2px_rgba(28,26,23,0.04)] py-16 px-6 flex flex-col items-center gap-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
-            <AlertCircle className="w-6 h-6 text-red-600" />
-          </div>
-          <div>
-            <p className="text-2xl text-[#1C1A17] font-semibold">
-              Couldn&apos;t load the dashboard
-            </p>
-            <p className="text-sm text-[#8A6A52] mt-1">{error}</p>
-          </div>
-          <RetryButton onClick={reload} loading={loading} />
-        </div>
+        <Card>
+          <ErrorState
+            title="Couldn't load the dashboard"
+            message={error}
+            onRetry={reload}
+            retrying={loading}
+          />
+        </Card>
       ) : (
-        <div className="space-y-6">
-          {error && (
-            <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              {error}
-            </div>
-          )}
+        <div className="space-y-4 lg:space-y-5">
+          {/* A refresh failed: keep the last numbers and say so */}
+          {error && <InlineAlert>{error} Showing the last loaded figures.</InlineAlert>}
 
-          {/* Summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:gap-4 xl:grid-cols-4">
             {statCards.map((card) => (
-              <DashboardStatCard
-                key={card.title}
-                {...card}
-                loading={showSkeleton}
-              />
+              <DashboardStatCard key={card.title} {...card} loading={showSkeleton} />
             ))}
           </div>
 
-          {/* Revenue + order statistics */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2 min-w-0">
+          <div className="grid grid-cols-1 gap-4 lg:gap-5 xl:grid-cols-3">
+            <div className="min-w-0 xl:col-span-2">
               <RevenueChart onUnauthorized={handleUnauthorized} />
             </div>
-            <OrderStatistics
-              statistics={overview?.orderStatistics}
-              loading={showSkeleton}
-            />
+            <OrderStatistics statistics={overview?.orderStatistics} loading={showSkeleton} />
           </div>
 
-          {/* Recent orders + recent users */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2 min-w-0">
-              <RecentOrders
-                orders={overview?.recentOrders}
-                loading={showSkeleton}
-              />
+          <div className="grid grid-cols-1 gap-4 lg:gap-5 xl:grid-cols-3">
+            <div className="min-w-0 xl:col-span-2">
+              <RecentOrders orders={overview?.recentOrders} loading={showSkeleton} />
             </div>
-            <RecentUsers users={overview?.recentUsers} loading={showSkeleton} />
+            <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5 xl:grid-cols-1">
+              <StockAlerts
+                products={products}
+                loading={products === null && !productsError}
+                error={productsError}
+                onRetry={reload}
+              />
+              <RecentUsers users={overview?.recentUsers} loading={showSkeleton} />
+            </div>
           </div>
         </div>
       )}

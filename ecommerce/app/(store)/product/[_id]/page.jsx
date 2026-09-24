@@ -13,7 +13,7 @@ import ProductGallery from "@/components/product/ProductGallery";
 import { EmptyState, ErrorState } from "@/components/ui/States";
 import { fetchProduct, isNotFound } from "@/lib/productsApi";
 import { formatCedis } from "@/lib/formatCurrency";
-import { DEFAULT_SIZE, DELIVERY_FEE, getUnitPrice, hasDiscount } from "@/lib/pricing";
+import { DEFAULT_SIZE, getUnitPrice, hasDiscount } from "@/lib/pricing";
 import { categoryLabel, findStoreCategory, shopCategoryHref } from "@/lib/categories";
 import { useWishlistToggle } from "@/lib/useWishlistToggle";
 
@@ -72,6 +72,20 @@ export default function ProductDetailsPage() {
   const clearToast = useCallback(() => setToast({ message: "", success: false, error: false }), []);
 
   const { addItems, handleAddToCart } = useEcommerce();
+
+  // Current delivery fee from the admin settings (display only; checkout recalculates)
+  const [deliveryFee, setDeliveryFee] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/store-info", { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.store?.deliveryFee != null) setDeliveryFee(data.store.deliveryFee);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
 
   /* ---------------------------------------------------------
      Load the product from MongoDB via /api/products/[id]
@@ -406,7 +420,13 @@ export default function ProductDetailsPage() {
               <section className="py-5">
                 <h2 className="text-[13px] font-medium tracking-[0.08em] uppercase">Delivery & payment</h2>
                 <ul className="mt-3 space-y-1.5 text-[15px] text-ink-soft">
-                  <li>Flat {formatCedis(DELIVERY_FEE)} delivery on every order.</li>
+                  <li>
+                    {deliveryFee == null
+                      ? "One flat delivery fee per order, shown in your cart."
+                      : deliveryFee > 0
+                        ? `Flat ${formatCedis(deliveryFee)} delivery on every order.`
+                        : "Free delivery on every order."}
+                  </li>
                   <li>Pay by card, Mobile Money or cash on delivery.</li>
                   <li>Follow your order&apos;s progress from My Orders.</li>
                 </ul>

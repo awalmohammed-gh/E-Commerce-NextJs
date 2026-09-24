@@ -1,4 +1,4 @@
-import { AlertCircle } from "lucide-react";
+import { InlineAlert } from "@/components/admin/ui/States";
 import { SettingsCard, Toggle, ToggleList } from "./SettingsFields";
 
 // Matches the paymentMethod values accepted by checkout
@@ -31,9 +31,8 @@ export default function PaymentSettings({ values, errors, onChange, ...cardProps
       {...cardProps}
     >
       {sectionError && (
-        <div className="mb-2 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          {sectionError}
+        <div className="mb-2">
+          <InlineAlert>{sectionError}</InlineAlert>
         </div>
       )}
 

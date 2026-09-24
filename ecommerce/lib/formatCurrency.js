@@ -24,6 +24,11 @@ export function formatCedis(amount) {
   })}`;
 }
 
+// 12500 -> "GH₵12.5K" (admin chart axes, matching formatCedis)
+export function formatCedisCompact(amount) {
+  return `GH₵${compactFormatter.format(Number(amount) || 0)}`;
+}
+
 // 12500 -> "GHS 12.5K" (for chart axes where space is tight)
 export function formatCurrencyCompact(amount) {
   return `${CURRENCY_CODE} ${compactFormatter.format(Number(amount) || 0)}`;

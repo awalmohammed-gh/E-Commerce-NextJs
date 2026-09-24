@@ -1,89 +1,82 @@
-import { Loader, Truck, CircleCheck, CircleX, ClipboardList } from "lucide-react";
-import { ORDER_STATUSES, ORDER_STATUS_BAR } from "@/lib/orderStatus";
-import {
-  CARD_CLASS,
-  EmptyState,
-  SectionHeader,
-  Skeleton,
-} from "./DashboardStates";
+import Link from "next/link";
+import { ClipboardList } from "lucide-react";
+import { ORDER_STATUSES, ORDER_STATUS_META, TONE_FILL } from "@/lib/orderStatus";
+import { Card, CardHeader, CARD_X } from "@/components/admin/ui/Card";
+import { EmptyState, Skeleton } from "@/components/admin/ui/States";
 
-const STATUS_META = {
-  Processing: { icon: Loader, hint: "Awaiting dispatch" },
-  Shipped: { icon: Truck, hint: "On the way" },
-  Delivered: { icon: CircleCheck, hint: "Completed" },
-  Cancelled: { icon: CircleX, hint: "Not fulfilled" },
-};
-
+/*
+  Where orders stand right now: one stacked bar for the overall mix,
+  then a row per status linking to the filtered order list.
+*/
 export default function OrderStatistics({ statistics, loading = false }) {
   const rows = ORDER_STATUSES.map((status) => ({
     status,
     count: statistics?.[status.toLowerCase()] || 0,
-    ...STATUS_META[status],
+    ...ORDER_STATUS_META[status],
   }));
   const total = rows.reduce((sum, row) => sum + row.count, 0);
 
   return (
-    <section className={`${CARD_CLASS} overflow-hidden`}>
-      <SectionHeader title="Order statistics" subtitle="Orders by status" />
+    <Card className="flex flex-col" aria-labelledby="order-status-title">
+      <CardHeader
+        id="order-status-title"
+        title="Orders by status"
+        description={total ? `${total.toLocaleString("en-GH")} orders in total` : "Every order, by where it is now"}
+      />
 
       {loading ? (
-        <div className="px-5 sm:px-6 pb-6 space-y-5">
+        <div className={`${CARD_X} space-y-4 pb-5`}>
+          <Skeleton className="h-2 w-full" />
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-3 w-1/3" />
-              <Skeleton className="h-2 w-full" />
-            </div>
+            <Skeleton key={i} className="h-5 w-full" />
           ))}
         </div>
       ) : total === 0 ? (
         <EmptyState
+          compact
           icon={ClipboardList}
-          title="No orders to summarise"
-          message="Status counts will show once orders come in."
+          title="No orders yet"
+          message="Status counts appear once customers start ordering."
         />
       ) : (
-        <ul className="px-5 sm:px-6 pb-6 space-y-5">
-          {rows.map(({ status, count, icon: Icon, hint }) => {
-            const share = Math.round((count / total) * 100);
-
-            return (
-              <li key={status}>
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon className="w-4 h-4 text-[#8A6A52] shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#1C1A17]">
-                        {status}
-                      </p>
-                      <p className="text-[11px] text-[#8A6A52]">{hint}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-[#1C1A17] tabular-nums shrink-0">
-                    <span className="font-semibold">
-                      {count.toLocaleString("en-GH")}
-                    </span>
-                    <span className="text-[#8A6A52]"> · {share}%</span>
-                  </p>
-                </div>
+        <div className={`${CARD_X} pb-4`}>
+          {/* Mix bar (decorative; the list below has the numbers) */}
+          <div className="flex h-2 gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
+            {rows
+              .filter((row) => row.count > 0)
+              .map((row) => (
                 <div
-                  className="h-2 rounded-full bg-[#F7F4EE] overflow-hidden"
-                  role="progressbar"
-                  aria-label={`${status} orders`}
-                  aria-valuenow={share}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
+                  key={row.status}
+                  className={TONE_FILL[row.tone]}
+                  style={{ width: `${(row.count / total) * 100}%` }}
+                />
+              ))}
+          </div>
+
+          <ul className="mt-3 -mx-2">
+            {rows.map(({ status, count, tone, hint }) => (
+              <li key={status}>
+                <Link
+                  href={`/admin/orders?status=${status}`}
+                  className="flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-ink/3"
                 >
-                  <div
-                    className={`h-full rounded-full ${ORDER_STATUS_BAR[status]}`}
-                    // Keep a sliver visible for small non-zero counts
-                    style={{ width: `${count > 0 ? Math.max(share, 2) : 0}%` }}
-                  />
-                </div>
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${TONE_FILL[tone]}`} aria-hidden="true" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm text-ink">{status}</span>
+                    <span className="block text-xs text-muted">{hint}</span>
+                  </span>
+                  <span className="text-sm font-medium text-ink tabular-nums">
+                    {count.toLocaleString("en-GH")}
+                  </span>
+                  <span className="w-10 text-right text-xs text-muted tabular-nums">
+                    {Math.round((count / total) * 100)}%
+                  </span>
+                </Link>
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ul>
+        </div>
       )}
-    </section>
+    </Card>
   );
 }

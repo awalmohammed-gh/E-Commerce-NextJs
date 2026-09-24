@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import Image from "next/image";
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { ImagePlus, Trash2 } from "lucide-react";
+import Button from "@/components/admin/ui/Button";
 import { SettingsCard, TextAreaField, TextField } from "./SettingsFields";
 
 const MAX_LOGO_SIZE = 2 * 1024 * 1024;
@@ -27,51 +28,33 @@ function LogoField({ logo, uploading, onUpload, onRemove, onInvalid }) {
 
   return (
     <div>
-      <p className="block font-utility text-[11px] font-semibold uppercase tracking-wider text-[#4A463F] mb-2">
-        Logo
-      </p>
+      <p className="mb-1.5 block text-[13px] font-medium text-ink">Logo</p>
       <div className="flex flex-wrap items-center gap-4">
-        <div className="relative w-20 h-20 shrink-0 rounded-2xl bg-[#F7F4EE] border border-[#E5DDD1] flex items-center justify-center overflow-hidden">
+        <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-line bg-paper">
           {logo ? (
-            <Image
-              src={logo}
-              alt="Store logo"
-              fill
-              sizes="80px"
-              className="object-contain p-2"
-            />
+            <Image src={logo} alt="Store logo" fill sizes="64px" className="object-contain p-2" />
           ) : (
-            <ImagePlus className="w-6 h-6 text-[#8A6A52]" />
+            <ImagePlus className="h-5 w-5 text-muted" aria-hidden="true" />
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
+            <Button
+              icon={ImagePlus}
               onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-              className="inline-flex items-center gap-2 bg-[#F7F4EE] border border-[#E5DDD1] hover:bg-white hover:border-[#1C1A17] text-[#1C1A17] px-4 py-2 rounded-full text-sm transition-colors disabled:opacity-60"
+              loading={uploading}
+              loadingText="Uploading..."
             >
-              {uploading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <ImagePlus className="w-4 h-4" />
-              )}
-              {uploading ? "Uploading..." : logo ? "Replace logo" : "Upload logo"}
-            </button>
+              {logo ? "Replace logo" : "Upload logo"}
+            </Button>
             {logo && !uploading && (
-              <button
-                type="button"
-                onClick={onRemove}
-                className="inline-flex items-center gap-2 text-sm text-red-600 hover:bg-red-50 px-4 py-2 rounded-full transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
+              <Button variant="ghost" icon={Trash2} onClick={onRemove} className="hover:bg-danger-tint hover:text-danger">
                 Remove
-              </button>
+              </Button>
             )}
           </div>
-          <p className="text-xs text-[#8A6A52]">
+          <p className="text-xs text-muted">
             PNG, JPG or WebP, up to 2 MB. Uploads are saved immediately.
           </p>
         </div>

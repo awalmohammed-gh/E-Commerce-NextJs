@@ -1,390 +1,336 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search,
-  Trash2,
-  Users as UsersIcon,
-  Loader2,
-  AlertCircle,
-  RefreshCw,
-  Mail,
-  Phone,
-  MapPin,
-} from "lucide-react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
-import LoadingSpinner from "@/ui/LoadingSpinner";
-import Toast from "@/ui/Toast";
-import ConfirmDialog from "@/ui/ConfirmDialog";
+import { RefreshCw, SearchX, ShoppingCart, Trash2, Users as UsersIcon } from "lucide-react";
+import { isUnauthorized } from "@/lib/adminDashboardApi";
+import { formatDate } from "@/lib/formatDate";
+import PageHeader from "@/components/admin/ui/PageHeader";
+import Button from "@/components/admin/ui/Button";
+import { Card } from "@/components/admin/ui/Card";
+import Avatar from "@/components/admin/ui/Avatar";
+import SearchInput from "@/components/admin/ui/SearchInput";
+import { TABLE, TD, TH, TR } from "@/components/admin/ui/Table";
+import { ConfirmDialog } from "@/components/admin/ui/Dialog";
+import { useToast } from "@/components/admin/ui/Toast";
+import { EmptyState, ErrorState, InlineAlert, Skeleton, friendlyError } from "@/components/admin/ui/States";
 
-export default function Users() {
+const primaryAddress = (user) => user.addresses?.find((a) => a.isDefault) || user.addresses?.[0] || null;
+
+const cartItemCount = (user) =>
+  Object.values(user.cartData || {}).reduce(
+    (sum, sizes) => sum + Object.values(sizes || {}).reduce((s, q) => s + (Number(q) || 0), 0),
+    0,
+  );
+
+function CustomersSkeleton() {
+  return (
+    <Card>
+      <div className="divide-y divide-line">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-3.5 w-1/4" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+            <Skeleton className="hidden h-3.5 w-24 sm:block" />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+export default function Customers() {
+  const router = useRouter();
+  const toast = useToast();
+
   const [usersData, setUsersData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [isError, setIsError] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [search, setSearch] = useState("");
-  const [deletingId, setDeletingId] = useState(null);
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const [toast, setToast] = useState({
-    message: "",
-    success: false,
-    error: false,
-  });
-
-  const showSuccess = (message) =>
-    setToast({ message, success: true, error: false });
-  const showError = (message) =>
-    setToast({ message, success: false, error: true });
-  const clearToast = () =>
-    setToast({ message: "", success: false, error: false });
-
-  /* ---------------------------------------------------------
-     Fetch users
-  --------------------------------------------------------- */
-  const fetchUsersData = async () => {
-    try {
-      setLoading(true);
-      setIsError(null);
-
-      const { data } = await axios.get("/api/auth/users");
-
-      if (data.success) {
-        setUsersData(data.users || []);
-      } else {
-        throw new Error(data.message || "Failed to fetch users");
-      }
-    } catch (error) {
-      console.error(error);
-      const message =
-        error?.response?.data?.message ||
-        error.message ||
-        "Failed to load users";
-      setIsError({ message });
-      showError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ---------------------------------------------------------
-     Delete user
-  --------------------------------------------------------- */
-  const handleAskDelete = (id) => {
-    setPendingDeleteId(id);
-    setConfirmOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    const id = pendingDeleteId;
-    if (!id) return;
-
-    try {
-      setDeletingId(id);
-
-      const { data } = await axios.delete(`/api/auth/users?id=${id}`);
-
-      if (data.success) {
-        showSuccess("User deleted.");
-        setUsersData((prev) => prev.filter((u) => u._id !== id));
-      } else {
-        throw new Error(data.message || "Failed to delete user");
-      }
-    } catch (error) {
-      console.error(error);
-      const message =
-        error?.response?.data?.message ||
-        error.message ||
-        "Failed to delete user";
-      showError(message);
-    } finally {
-      setDeletingId(null);
-      setConfirmOpen(false);
-      setPendingDeleteId(null);
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setConfirmOpen(false);
-    setPendingDeleteId(null);
-  };
+  /* Fetch */
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    fetchUsersData();
-  }, []);
+    const load = async () => {
+      try {
+        const { data } = await axios.get("/api/auth/users");
+        if (!data.success) throw new Error(data.message || "Failed to fetch users");
 
-  /* ---------------------------------------------------------
-     Filter
-  --------------------------------------------------------- */
+        setUsersData(data.users || []);
+        setLoadError(null);
+        setLoaded(true);
+      } catch (error) {
+        if (isUnauthorized(error)) {
+          router.replace("/admin/admin-login");
+          return;
+        }
+        console.error(error);
+        setLoadError(friendlyError(error, "Customers couldn't be loaded."));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [reloadKey, router]);
+
+  // Refresh / Retry
+  const fetchUsersData = () => {
+    setLoading(true);
+    setReloadKey((k) => k + 1);
+  };
+
+  /* Delete */
+  const handleConfirmDelete = async () => {
+    const user = pendingDelete;
+    if (!user) return;
+
+    try {
+      setDeleting(true);
+      const { data } = await axios.delete(`/api/auth/users?id=${user._id}`);
+      if (!data.success) throw new Error(data.message || "Failed to delete user");
+
+      setUsersData((prev) => prev.filter((u) => u._id !== user._id));
+      toast.success(`${user.fullName || "The customer"}'s account was deleted.`);
+    } catch (error) {
+      if (isUnauthorized(error)) {
+        router.replace("/admin/admin-login");
+        return;
+      }
+      console.error(error);
+      toast.error(friendlyError(error, "The account couldn't be deleted. Please try again."));
+    } finally {
+      setDeleting(false);
+      setPendingDelete(null);
+    }
+  };
+
+  /* Filter */
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return usersData;
 
-    return usersData.filter((u) => {
-      const matches = (v) => v?.toLowerCase().includes(q);
-
-      return (
+    const matches = (v) => v?.toLowerCase().includes(q);
+    return usersData.filter(
+      (u) =>
         matches(u.fullName) ||
         matches(u.email) ||
-        u.addresses?.some(
-          (a) => matches(a.fullName) || matches(a.phone) || matches(a.city),
-        )
-      );
-    });
+        u.addresses?.some((a) => matches(a.fullName) || matches(a.phone) || matches(a.city)),
+    );
   }, [usersData, search]);
 
-  /* ---------------------------------------------------------
-     Helpers
-  --------------------------------------------------------- */
-  const formatDate = (d) => {
-    if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-GH", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
+  /* Render */
+  let content;
 
-  const getInitials = (name) => {
-    if (!name) return "?";
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0][0]?.toUpperCase() || "?";
-    return (
-      (parts[0][0] || "") + (parts[parts.length - 1][0] || "")
-    ).toUpperCase();
-  };
-
-  const getPrimaryAddress = (user) =>
-    user.addresses?.find((a) => a.isDefault) ||
-    user.addresses?.[0] ||
-    null;
-
-  const countCartItems = (user) => {
-    const cart = user.cartData || {};
-    return Object.values(cart).reduce(
-      (sum, sizes) =>
-        sum + Object.values(sizes).reduce((s, q) => s + (Number(q) || 0), 0),
-      0,
+  if (!loaded && loading) {
+    content = <CustomersSkeleton />;
+  } else if (!loaded && loadError) {
+    content = (
+      <Card>
+        <ErrorState title="Couldn't load customers" message={loadError} onRetry={fetchUsersData} retrying={loading} />
+      </Card>
     );
-  };
+  } else if (usersData.length === 0) {
+    content = (
+      <Card>
+        <EmptyState
+          icon={UsersIcon}
+          title="No customers yet"
+          message="Customers appear here as soon as they create an account in the store."
+        />
+      </Card>
+    );
+  } else if (filtered.length === 0) {
+    content = (
+      <Card>
+        <EmptyState
+          icon={SearchX}
+          title="No customers match"
+          message={`Nothing found for "${search.trim()}". Try a name, email, phone number or city.`}
+          action={<Button onClick={() => setSearch("")}>Clear search</Button>}
+        />
+      </Card>
+    );
+  } else {
+    content = (
+      <Card className="overflow-hidden">
+        {/* Phones */}
+        <ul className="divide-y divide-line md:hidden">
+          {filtered.map((user) => {
+            const address = primaryAddress(user);
+            const cart = cartItemCount(user);
+            return (
+              <li key={user._id} className="flex items-start gap-3 p-4">
+                <Avatar name={user.fullName} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink">{user.fullName || "Unnamed customer"}</p>
+                  <p className="truncate text-xs text-muted">{user.email}</p>
+                  <p className="mt-1 text-xs text-muted">
+                    Joined {formatDate(user.createdAt)}
+                    {address?.city && ` · ${address.city}`}
+                    {cart > 0 && ` · ${cart} in cart`}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Trash2}
+                  onClick={() => setPendingDelete(user)}
+                  className="hover:bg-danger-tint hover:text-danger"
+                  aria-label={`Delete ${user.fullName || user.email}`}
+                >
+                  Delete
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
 
-  /* ---------------------------------------------------------
-     Loading
-  --------------------------------------------------------- */
-  if (loading && usersData.length === 0) {
-    return <LoadingSpinner />;
+        {/* md and up */}
+        <div className="hidden overflow-x-auto md:block">
+          <table className={TABLE}>
+            <thead>
+              <tr>
+                <th scope="col" className={`${TH} border-t-0`}>Customer</th>
+                <th scope="col" className={`${TH} border-t-0`}>Phone</th>
+                <th scope="col" className={`${TH} border-t-0`}>Location</th>
+                <th scope="col" className={`${TH} hidden border-t-0 lg:table-cell`}>Cart</th>
+                <th scope="col" className={`${TH} border-t-0`}>Joined</th>
+                <th scope="col" className={`${TH} border-t-0`}>
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((user) => {
+                const address = primaryAddress(user);
+                const cart = cartItemCount(user);
+                return (
+                  <tr key={user._id} className={TR}>
+                    <td className={TD}>
+                      <div className="flex min-w-50 items-center gap-3">
+                        <Avatar name={user.fullName} />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-ink">{user.fullName || "Unnamed customer"}</p>
+                          <p className="truncate text-xs text-muted">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`${TD} whitespace-nowrap text-ink-soft`}>{address?.phone || <Muted />}</td>
+                    <td className={`${TD} text-ink-soft`}>
+                      {address ? (
+                        <p className="max-w-50 truncate">
+                          {[address.city, address.region].filter(Boolean).join(", ") || address.address}
+                        </p>
+                      ) : (
+                        <Muted>No address saved</Muted>
+                      )}
+                    </td>
+                    <td className={`${TD} hidden text-ink-soft lg:table-cell`}>
+                      {cart > 0 ? (
+                        <span className="inline-flex items-center gap-1.5 tabular-nums">
+                          <ShoppingCart className="h-3.5 w-3.5 text-muted" aria-hidden="true" />
+                          {cart} {cart === 1 ? "item" : "items"}
+                        </span>
+                      ) : (
+                        <Muted>Empty</Muted>
+                      )}
+                    </td>
+                    <td className={`${TD} whitespace-nowrap text-ink-soft`}>{formatDate(user.createdAt)}</td>
+                    <td className={`${TD} text-right`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={Trash2}
+                        onClick={() => setPendingDelete(user)}
+                        className="hover:bg-danger-tint hover:text-danger"
+                        aria-label={`Delete ${user.fullName || user.email}`}
+                      >
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {search.trim() && (
+          <p className="border-t border-line px-4 py-2.5 text-xs text-muted sm:px-5">
+            Showing {filtered.length} of {usersData.length} customers
+          </p>
+        )}
+      </Card>
+    );
   }
 
   return (
     <>
-      {/* Header */}
-      <div className="mb-8 flex flex-col gap-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[#8A6A52]">
-          Store
-        </p>
-        <h1 className="font-semibold text-3xl sm:text-4xl text-[#1C1A17]">
-          Customers
-        </h1>
-        <p className="text-sm text-[#8A6A52]">
-          All registered customers on your store.
-        </p>
-      </div>
-
-      {/* Toolbar */}
-      <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div className="flex items-center gap-3 flex-1 bg-[#F7F4EE] border border-[#E5DDD1] rounded-full px-4 py-2.5 focus-within:bg-white focus-within:border-[#1C1A17] transition-colors">
-          <Search className="w-4 h-4 text-[#8A6A52] shrink-0" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, email, or phone..."
-            className="w-full bg-transparent outline-none text-sm text-[#1C1A17] placeholder:text-[#8A6A52]/50"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={fetchUsersData}
-          disabled={loading}
-          className="inline-flex items-center justify-center gap-2 bg-[#F7F4EE] border border-[#E5DDD1] hover:bg-white hover:border-[#1C1A17] text-[#1C1A17] px-5 py-2.5 rounded-full text-sm transition-colors disabled:opacity-60"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
-      </div>
-
-      {/* Error */}
-      {isError && (
-        <div className="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm">
-          <AlertCircle className="w-4 h-4" />
-          {isError.message}
-        </div>
-      )}
-
-      {/* Content */}
-      {filtered.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-[#1C1A17]/5 shadow-[0_1px_2px_rgba(28,26,23,0.04)] py-16 px-6 flex flex-col items-center gap-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-[#F7F4EE] flex items-center justify-center">
-            <UsersIcon className="w-6 h-6 text-[#8A6A52]" />
-          </div>
-          <div>
-            <p className="text-2xl text-[#1C1A17] font-semibold">
-              {usersData.length === 0 ? "No customers yet" : "No matches"}
-            </p>
-            <p className="text-sm text-[#8A6A52] mt-1">
-              {usersData.length === 0
-                ? "Customers will appear here once they sign up."
-                : "Try a different search."}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-3xl border border-[#1C1A17]/5 shadow-[0_1px_2px_rgba(28,26,23,0.04)] overflow-hidden">
-          {/* Header row */}
-          <div className="hidden md:grid grid-cols-[2fr_1.6fr_1fr_0.9fr_0.6fr_auto] gap-4 px-6 py-4 bg-[#FAF8F4] border-b border-[#1C1A17]/5 text-[11px] font-semibold uppercase tracking-wider text-[#8A6A52]">
-            <p>Customer</p>
-            <p>Contact</p>
-            <p>Address</p>
-            <p>Joined</p>
-            <p>Cart</p>
-            <p className="text-right">Actions</p>
-          </div>
-
-          {/* Rows */}
-          <div className="divide-y divide-[#1C1A17]/5">
-            <AnimatePresence initial={false}>
-              {filtered.map((user) => {
-                const id = user._id;
-                const isDeleting = deletingId === id;
-                const primaryAddress = getPrimaryAddress(user);
-                const cartItems = countCartItems(user);
-
-                return (
-                  <motion.div
-                    key={id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -30 }}
-                    transition={{ duration: 0.2 }}
-                    className={`group grid grid-cols-1 md:grid-cols-[2fr_1.6fr_1fr_0.9fr_0.6fr_auto] gap-4 px-4 sm:px-6 py-4 items-center hover:bg-[#FAF8F4]/60 transition-colors ${
-                      isDeleting ? "opacity-40 pointer-events-none" : ""
-                    }`}
-                  >
-                    {/* Customer - avatar + name */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-[#D98880]/15 text-[#D98880] flex items-center justify-center shrink-0 font-semibold text-sm">
-                        {getInitials(user.fullName)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-[#1C1A17] truncate">
-                          {user.fullName || "—"}
-                        </p>
-                        <p className="text-[11px] text-[#8A6A52] truncate">
-                          #{String(id).slice(-8)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Contact */}
-                    <div className="min-w-0 space-y-0.5">
-                      {user.email && (
-                        <div className="flex items-center gap-1.5 text-xs text-[#4A463F] truncate">
-                          <Mail className="w-3 h-3 text-[#8A6A52] shrink-0" />
-                          <span className="truncate">{user.email}</span>
-                        </div>
-                      )}
-                      {primaryAddress?.phone && (
-                        <div className="flex items-center gap-1.5 text-xs text-[#8A6A52] truncate">
-                          <Phone className="w-3 h-3 shrink-0" />
-                          <span className="truncate">
-                            {primaryAddress.phone}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Address */}
-                    <div className="min-w-0 text-xs text-[#4A463F]">
-                      {primaryAddress ? (
-                        <div className="flex items-start gap-1.5">
-                          <MapPin className="w-3 h-3 text-[#8A6A52] mt-0.5 shrink-0" />
-                          <span className="line-clamp-2">
-                            {primaryAddress.city ||
-                              primaryAddress.address ||
-                              "—"}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-[#8A6A52]/60">No address</span>
-                      )}
-                    </div>
-
-                    {/* Joined */}
-                    <p className="text-sm text-[#4A463F]">
-                      {formatDate(user.createdAt)}
-                    </p>
-
-                    {/* Cart */}
-                    <p className="text-sm text-[#4A463F]">
-                      {cartItems > 0 ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#F7F4EE] text-[11px] font-medium">
-                          {cartItems}
-                        </span>
-                      ) : (
-                        <span className="text-[#8A6A52]/60 text-xs">—</span>
-                      )}
-                    </p>
-
-                    {/* Actions */}
-                    <div className="flex items-center justify-end gap-1.5 md:opacity-60 md:group-hover:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        onClick={() => handleAskDelete(id)}
-                        disabled={isDeleting}
-                        className="w-9 h-9 flex items-center justify-center rounded-full text-[#8A6A52] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                        aria-label="Delete customer"
-                      >
-                        {isDeleting ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </div>
-        </div>
-      )}
-
-      {/* Confirm delete dialog */}
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Delete this customer?"
-        message="This will permanently remove their account and cannot be undone."
-        confirmText="Yes, delete"
-        cancelText="No, keep it"
-        loading={deletingId !== null}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
+      <PageHeader
+        title="Customers"
+        description={
+          loaded
+            ? `${usersData.length} registered ${usersData.length === 1 ? "customer" : "customers"}`
+            : "Everyone with an account in the store."
+        }
+        actions={
+          <Button icon={RefreshCw} onClick={fetchUsersData} loading={loading && loaded} disabled={loading}>
+            Refresh
+          </Button>
+        }
       />
 
-      {/* Toast */}
-      <div className="fixed bottom-6 right-6 z-200 pointer-events-none">
-        <div className="pointer-events-auto">
-          <Toast
-            success={toast.success}
-            error={toast.error}
-            message={toast.message}
-            onClose={clearToast}
+      {loaded && usersData.length > 0 && (
+        <div className="mb-4 sm:max-w-md">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by name, email, phone or city"
+            label="Search customers"
           />
         </div>
-      </div>
+      )}
+
+      {loaded && loadError && (
+        <div className="mb-4">
+          <InlineAlert>{loadError} Showing the last loaded list.</InlineAlert>
+        </div>
+      )}
+
+      {content}
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this customer account?"
+        message={
+          pendingDelete && (
+            <p>
+              <span className="font-medium text-ink">{pendingDelete.fullName || pendingDelete.email}</span> will lose
+              access to their account, saved addresses, cart and wishlist. Their past orders stay in Orders. This
+              can&apos;t be undone.
+            </p>
+          )
+        }
+        confirmLabel="Delete account"
+        cancelLabel="Keep account"
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </>
   );
+}
+
+function Muted({ children = "—" }) {
+  return <span className="text-muted">{children}</span>;
 }

@@ -125,8 +125,13 @@ export default async function Footer() {
             &copy; {year} {store.name}. All rights reserved.
           </p>
           <p>
-            Delivery {formatCedis(store.deliveryFee)} per order
-            {store.paymentMethods.length > 0 && <> &middot; {store.paymentMethods.join(", ")}</>}
+            {[
+              store.deliveryFee != null &&
+                (store.deliveryFee > 0 ? `Delivery ${formatCedis(store.deliveryFee)} per order` : "Free delivery"),
+              store.paymentMethods.length > 0 && store.paymentMethods.join(", "),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         </div>
       </div>

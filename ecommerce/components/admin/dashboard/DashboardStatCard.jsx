@@ -1,10 +1,17 @@
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { CARD_CLASS, Skeleton } from "./DashboardStates";
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
+import { CARD } from "@/components/admin/ui/Card";
+import { Skeleton } from "@/components/admin/ui/States";
+
+const TREND = {
+  up: { icon: ArrowUpRight, className: "text-success", word: "Up" },
+  down: { icon: ArrowDownRight, className: "text-danger", word: "Down" },
+  flat: { icon: Minus, className: "text-muted", word: "No change" },
+};
 
 /*
   change: { current, previous, percent, windowDays } from the API.
-  percent is null when there is no previous-period data to compare with,
-  in which case only the period activity line is shown.
+  percent is null when there is no previous-period data to compare with;
+  then only the activity line shows (a trend is never invented).
 */
 export default function DashboardStatCard({
   title,
@@ -16,59 +23,45 @@ export default function DashboardStatCard({
 }) {
   if (loading) {
     return (
-      <div className={`${CARD_CLASS} p-5 sm:p-6`}>
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-10 w-10 rounded-2xl" />
-        </div>
-        <Skeleton className="h-8 w-32 mt-4" />
-        <Skeleton className="h-3 w-40 mt-3" />
+      <div className={`${CARD} p-4 sm:p-5`}>
+        <Skeleton className="h-3.5 w-24" />
+        <Skeleton className="mt-4 h-7 w-32" />
+        <Skeleton className="mt-3 h-3 w-40" />
       </div>
     );
   }
 
   const percent = change?.percent;
-  const trend =
-    percent == null ? null : percent > 0 ? "up" : percent < 0 ? "down" : "flat";
-
-  const trendStyles = {
-    up: "bg-green-50 text-green-700",
-    down: "bg-red-50 text-red-700",
-    flat: "bg-[#F7F4EE] text-[#8A6A52]",
-  };
-  const TrendIcon = { up: TrendingUp, down: TrendingDown, flat: Minus }[trend];
+  const trend = percent == null ? null : percent > 0 ? "up" : percent < 0 ? "down" : "flat";
+  const trendMeta = trend && TREND[trend];
 
   return (
-    <div className={`${CARD_CLASS} p-5 sm:p-6`}>
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8A6A52]">
-          {title}
-        </p>
-        <div className="w-10 h-10 shrink-0 rounded-2xl bg-[#D98880]/10 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-[#D98880]" />
-        </div>
+    <div className={`${CARD} p-4 sm:p-5`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[13px] font-medium text-ink-soft">{title}</p>
+        <Icon className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
       </div>
 
-      <p className="mt-3 text-2xl sm:text-[28px] font-semibold text-[#1C1A17] tracking-tight tabular-nums break-words">
+      <p className="mt-3 text-xl font-semibold tracking-[-0.01em] sm:text-2xl break-words text-ink tabular-nums">
         {value}
       </p>
 
       {change && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#8A6A52]">
-          {trend && (
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+          {trendMeta && (
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold ${trendStyles[trend]}`}
-              title={`Compared with the previous ${change.windowDays} days`}
+              className={`inline-flex items-center gap-0.5 font-medium tabular-nums ${trendMeta.className}`}
             >
-              <TrendIcon className="w-3 h-3" />
+              <trendMeta.icon className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="sr-only">{trendMeta.word} </span>
               {percent > 0 ? "+" : ""}
               {percent}%
             </span>
           )}
           <span>
-            {formatChange(change.current)} in last {change.windowDays} days
+            {formatChange(change.current)} in the last {change.windowDays} days
           </span>
-        </div>
+        </p>
       )}
     </div>
   );

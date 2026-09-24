@@ -31,8 +31,8 @@ export default function NotificationSettings({ values, errors, onChange, ...card
       description="Choose which store events you want to be notified about."
       {...cardProps}
     >
-      <div className="mb-2 flex items-start gap-2 bg-[#F7F4EE] border border-[#E5DDD1] text-[#4A463F] rounded-2xl px-4 py-3 text-xs">
-        <Info className="w-4 h-4 shrink-0 text-[#8A6A52]" />
+      <div className="mb-2 flex items-start gap-2 rounded-md border border-line bg-paper px-3.5 py-2.5 text-[13px] text-ink-soft">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
         Preferences are saved now and will be used once email/SMS
         notifications are set up.
       </div>

@@ -28,7 +28,7 @@ const usePageVisible = () =>
 /* ------------------------------------------------------------------
    Controls: pause/play, previous, position dots, next
 ------------------------------------------------------------------ */
-function Controls({ count, active, playing, canAutoplay, interval, tone, onGo, onToggle, labelId }) {
+function Controls({ count, active, playing, canAutoplay, showPauseButton, interval, tone, onGo, onToggle, labelId }) {
   const light = tone === "light";
   const button = `flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
     light ? "text-cream hover:bg-cream/15" : "text-ink hover:bg-ink/5"
@@ -38,7 +38,7 @@ function Controls({ count, active, playing, canAutoplay, interval, tone, onGo, o
 
   return (
     <div className="flex items-center gap-1">
-      {canAutoplay && (
+      {canAutoplay && showPauseButton && (
         <button
           type="button"
           onClick={onToggle}
@@ -100,6 +100,8 @@ function Controls({ count, active, playing, canAutoplay, interval, tone, onGo, o
                               images don't compete with the first one
   renderControls: (controls) => JSX, to place the controls in the layout
   interval:     ms per slide when auto-playing
+  showPauseButton: false hides the pause/play button (auto-play still
+                pauses on hover, focus and hidden tabs)
 
   Behaviour: crossfade between slides stacked in one grid cell (the
   tallest slide sets the height, so nothing shifts); auto-play pauses
@@ -113,6 +115,7 @@ export default function Slideshow({
   renderControls,
   label,
   interval = 6500,
+  showPauseButton = true,
   tone = "dark",
   className = "",
   trackClassName = "",
@@ -175,6 +178,7 @@ export default function Slideshow({
         active={active}
         playing={playing}
         canAutoplay={canAutoplay}
+        showPauseButton={showPauseButton}
         interval={interval}
         tone={tone}
         labelId={regionId}

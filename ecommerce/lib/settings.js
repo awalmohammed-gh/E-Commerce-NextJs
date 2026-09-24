@@ -78,7 +78,7 @@ const bool =
       : { error: `${label} must be on or off` };
 
 const number =
-  ({ label, min, max, integer = false, nullable = false }) =>
+  ({ label, min, max, integer = false, nullable = false, decimals }) =>
   (raw) => {
     if (nullable && (raw === null || raw === "")) return { value: null };
 
@@ -92,6 +92,14 @@ const number =
     if (!Number.isFinite(value)) return { error: `${label} must be a number` };
     if (integer && !Number.isInteger(value)) {
       return { error: `${label} must be a whole number` };
+    }
+    // e.g. money: at most 2 decimal places (pesewas). The tolerance absorbs
+    // float noise such as 25.1 * 100 = 2510.0000000000005
+    if (decimals !== undefined) {
+      const scaled = value * 10 ** decimals;
+      if (Math.abs(scaled - Math.round(scaled)) > 1e-6) {
+        return { error: `${label} can have at most ${decimals} decimal places` };
+      }
     }
     if (min !== undefined && value < min) {
       return { error: `${label} must be at least ${min}` };
@@ -127,6 +135,7 @@ const FIELD_RULES = {
     }),
     currencySymbol: text({ label: "Currency symbol", max: 5, required: true }),
     country: text({ label: "Default country", max: 60, required: true }),
+    deliveryFee: number({ label: "Delivery fee", min: 0, max: 10000, decimals: 2 }),
     taxEnabled: bool({ label: "Tax" }),
     taxPercentage: number({ label: "Tax percentage", min: 0, max: 100 }),
     minimumOrderAmount: number({ label: "Minimum order amount", min: 0 }),
@@ -274,6 +283,20 @@ async function loadSettingsDoc() {
 
 export async function getSettings() {
   return toPublicSettings(await loadSettingsDoc());
+}
+
+// Cache tag for storefront data derived from settings (see lib/storeInfo.js)
+export const STORE_SETTINGS_TAG = "store-settings";
+
+/*
+  The current flat delivery fee. Read fresh (never cached) because cart
+  and checkout totals are calculated from it on the server.
+*/
+export async function getDeliveryFee() {
+  const { store } = await getSettings();
+  const fee = Number(store?.deliveryFee);
+  if (!Number.isFinite(fee) || fee < 0) throw new Error("Delivery fee setting is invalid");
+  return fee;
 }
 
 export async function updateSettings(body) {

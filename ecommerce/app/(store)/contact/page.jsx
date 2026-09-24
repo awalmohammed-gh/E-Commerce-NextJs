@@ -72,7 +72,11 @@ export default async function ContactPage() {
             <div>
               <dt className="eyebrow">Delivery</dt>
               <dd className="mt-2 text-[15px] leading-relaxed text-ink-soft">
-                A flat {formatCedis(store.deliveryFee)} on every order, whatever you buy.
+                {store.deliveryFee == null
+                  ? "One flat fee on every order, shown in your cart before you pay."
+                  : store.deliveryFee > 0
+                    ? `A flat ${formatCedis(store.deliveryFee)} on every order, whatever you buy.`
+                    : "Free on every order, whatever you buy."}
               </dd>
             </div>
             <div>

@@ -4,7 +4,7 @@
    Eleoka storefront design system
    Warm ink on paper, one restrained accent (rose), editorial serif
    for display type and a quiet grotesk for everything else.
-   The admin dashboard keeps its own look; these tokens are opt-in.
+   The admin dashboard shares these tokens through the .admin class.
 ================================================================== */
 
 @theme {
@@ -36,8 +36,15 @@
   --color-success-tint: #e6efe8;
   --color-warning: #8a5a12;
   --color-warning-tint: #f6ecd9;
+  /* Brighter amber for dots and bars, never text */
+  --color-warning-mark: #c08a2e;
   --color-danger: #b3413a;
   --color-danger-tint: #f8e4e2;
+  --color-info: #2f5b85;
+  --color-info-tint: #e4ecf4;
+
+  /* Admin app background: a shade deeper than paper so white panels separate */
+  --color-canvas: #f5f3ef;
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -59,6 +66,79 @@
   .storefront ::selection {
     background: var(--color-rose-tint);
     color: var(--color-ink);
+  }
+
+  /* Admin: same tokens as the storefront, sans-only and denser */
+  .admin {
+    @apply bg-canvas text-ink font-sans antialiased;
+    font-feature-settings: "kern", "liga";
+  }
+
+  .admin :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  .admin ::selection {
+    background: var(--color-rose-tint);
+    color: var(--color-ink);
+  }
+}
+
+/* ------------------------------------------------------------------
+   Admin dialogs and drawers (native <dialog>, components/admin/ui)
+------------------------------------------------------------------ */
+dialog.admin-dialog::backdrop,
+dialog.admin-drawer::backdrop {
+  background: rgb(28 26 23 / 0.4);
+}
+
+/* Admin pages: the canvas runs to the very bottom of the page,
+   so no white body shows below short content */
+html:has(.admin) {
+  background-color: var(--color-canvas);
+}
+
+/* The page behind an open dialog doesn't scroll */
+html:has(dialog.admin-dialog[open], dialog.admin-drawer[open]) {
+  overflow: hidden;
+}
+
+dialog.admin-dialog[open] {
+  animation: admin-pop 160ms var(--ease-out-soft);
+}
+
+dialog.admin-drawer[open] {
+  animation: admin-slide-right 220ms var(--ease-out-soft);
+}
+
+dialog.admin-drawer.from-left[open] {
+  animation-name: admin-slide-left;
+}
+
+@keyframes admin-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes admin-slide-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes admin-slide-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes admin-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 
@@ -167,7 +247,12 @@
 @media (prefers-reduced-motion: reduce) {
   .storefront *,
   .storefront *::before,
-  .storefront *::after {
+  .storefront *::after,
+  .admin *,
+  .admin *::before,
+  .admin *::after,
+  dialog.admin-dialog,
+  dialog.admin-drawer {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

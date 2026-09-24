@@ -1,10 +1,10 @@
 /*
   Pricing rules shared by the server (authoritative) and the client
   (display only). Checkout always recalculates with these on the server.
-*/
 
-// Flat delivery fee per order, in GHS
-export const DELIVERY_FEE = 25;
+  The delivery fee is not here: it's an admin setting (store.deliveryFee),
+  read on the server with getDeliveryFee() in lib/settings.js.
+*/
 
 // Size key used for products that have no sizes
 export const DEFAULT_SIZE = "default";

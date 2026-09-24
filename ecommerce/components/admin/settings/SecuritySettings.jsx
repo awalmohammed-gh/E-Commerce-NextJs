@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { KeyRound, LogOut, Mail, ShieldCheck } from "lucide-react";
-import ConfirmDialog from "@/ui/ConfirmDialog";
+import { ConfirmDialog } from "@/components/admin/ui/Dialog";
+import Button from "@/components/admin/ui/Button";
 import { formatDate } from "@/lib/formatDate";
 import {
   changeAdminPassword,
@@ -159,29 +160,19 @@ export default function SecuritySettings({
         description="The account used to sign in to this dashboard."
       >
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#D98880]/10 flex items-center justify-center shrink-0">
-              <Mail className="w-5 h-5 text-[#D98880]" />
-            </div>
+          <div className="flex items-start gap-3">
+            <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8A6A52]">
-                Admin email
-              </p>
-              <p className="text-sm font-medium text-[#1C1A17] truncate">
-                {admin?.email}
-              </p>
+              <p className="text-[13px] text-muted">Admin email</p>
+              <p className="truncate text-sm font-medium text-ink">{admin?.email}</p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#D98880]/10 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5 text-[#D98880]" />
-            </div>
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8A6A52]">
-                Password
-              </p>
-              <p className="text-sm text-[#1C1A17]">
+              <p className="text-[13px] text-muted">Password</p>
+              <p className="text-sm text-ink">
                 {admin?.passwordSource === "database"
                   ? `Stored securely (hashed). Last changed ${formatDate(admin.passwordChangedAt)}.`
                   : "Using the initial password from the server configuration. Change it below to store a hashed password instead."}
@@ -189,7 +180,7 @@ export default function SecuritySettings({
             </div>
           </div>
 
-          <p className="text-xs text-[#8A6A52]">
+          <p className="text-xs text-muted">
             The admin email is set by <code className="font-mono">ADMIN_EMAIL</code>{" "}
             on the server and can&apos;t be changed here.
           </p>
@@ -227,23 +218,14 @@ export default function SecuritySettings({
             />
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-5 border-t border-[#1C1A17]/5">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-[#1C1A17]">
-                Sign out all other sessions
-              </p>
-              <p className="text-xs text-[#8A6A52] mt-0.5">
-                Ends every admin sign-in except this one.
-              </p>
+              <p className="text-sm font-medium text-ink">Sign out all other sessions</p>
+              <p className="mt-0.5 text-[13px] text-muted">Ends every admin sign-in except this one.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setConfirmOpen(true)}
-              className="inline-flex items-center gap-2 text-sm font-medium text-red-600 border border-red-200 hover:bg-red-50 px-4 py-2.5 rounded-full transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
+            <Button variant="danger-outline" icon={LogOut} onClick={() => setConfirmOpen(true)}>
               Sign out others
-            </button>
+            </Button>
           </div>
         </div>
       </SettingsCard>
@@ -251,9 +233,9 @@ export default function SecuritySettings({
       <ConfirmDialog
         open={confirmOpen}
         title="Sign out other sessions?"
-        message="Every other device signed in as admin will need to sign in again."
-        confirmText="Yes, sign out"
-        cancelText="Cancel"
+        message="Every other device signed in as admin will need to sign in again. You'll stay signed in here."
+        confirmLabel="Sign out others"
+        cancelLabel="Cancel"
         loading={revoking}
         onConfirm={handleLogoutAll}
         onCancel={() => setConfirmOpen(false)}
