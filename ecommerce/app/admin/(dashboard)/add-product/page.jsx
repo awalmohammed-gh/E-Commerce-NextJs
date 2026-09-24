@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -15,6 +16,7 @@ import {
 import Toast from "@/ui/Toast";
 
 export default function AddProduct() {
+  const router = useRouter();
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -157,6 +159,10 @@ export default function AddProduct() {
         body: formData,
       });
 
+      if (res.status === 401 || res.status === 403) {
+        router.replace("/admin/admin-login");
+        return;
+      }
       if (!res.ok) throw new Error("Failed to create product");
 
       showSuccess("Product created successfully.");

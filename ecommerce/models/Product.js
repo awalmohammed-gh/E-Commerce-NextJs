@@ -17,6 +17,10 @@ const productSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Storefront filters and default "newest" sort
+productSchema.index({ category: 1, subCategory: 1 });
+productSchema.index({ createdAt: -1 });
+
 export const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
 
 

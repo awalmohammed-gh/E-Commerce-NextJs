@@ -1,11 +1,29 @@
-import { Poppins } from "next/font/google";
+import { Cormorant_Garamond, Poppins, Work_Sans } from "next/font/google";
 import "./globals.css";
 import { EcommerceContextProvider } from "@/context/EcommerceContextProvider";
+import MotionProvider from "@/components/common/MotionProvider";
 
+// Admin dashboard font (the body default)
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-poppins",
+  display: "swap",
+});
+
+// Storefront fonts, applied through the .storefront class
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-cormorant",
+  display: "swap",
+});
+
+const workSans = Work_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-work-sans",
   display: "swap",
 });
 
@@ -16,7 +34,7 @@ export const metadata = {
   },
 
   description:
-    "ELEOKA is a women's dress boutique born in Accra. Elegant, timeless dresses made for real women. Free delivery in Accra.",
+    "ELEOKA is a women's fashion boutique born in Accra. Dresses, tops, sets and accessories chosen for real women, delivered across Ghana.",
 
   keywords: [
     "ELEOKA",
@@ -61,9 +79,14 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={poppins.variable}>
+    <html
+      lang="en"
+      className={`${poppins.variable} ${cormorant.variable} ${workSans.variable}`}
+    >
       <body className={poppins.className}>
-        <EcommerceContextProvider>{children}</EcommerceContextProvider>
+        <MotionProvider>
+          <EcommerceContextProvider>{children}</EcommerceContextProvider>
+        </MotionProvider>
       </body>
     </html>
   );

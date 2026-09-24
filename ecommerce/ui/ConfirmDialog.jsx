@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function ConfirmDialog({
@@ -12,13 +13,26 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
+  const cancelRef = useRef(null);
+
+  // Focus the safe choice when opening; Escape cancels
+  useEffect(() => {
+    if (!open) return;
+    cancelRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === "Escape" && !loading) onCancel?.();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, loading, onCancel]);
+
   return (
     <AnimatePresence>
       {open && (
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/40 z-300"
+            className="fixed inset-0 bg-ink/40 z-300"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -26,30 +40,35 @@ export default function ConfirmDialog({
           />
 
           {/* Dialog */}
-          <div className="fixed inset-0 z-301 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-301 flex items-end sm:items-center justify-center p-4 pointer-events-none">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="confirm-title"
+              aria-describedby={message ? "confirm-message" : undefined}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              transition={{ duration: 0.18 }}
+              className="pointer-events-auto w-full max-w-sm bg-white rounded-sm shadow-[0_16px_40px_rgba(28,26,23,0.18)] p-6"
             >
-              <h3 className="font-editorial font-semibold text-xl text-[#1C1A17]">
+              <h3 id="confirm-title" className="text-lg font-semibold text-ink">
                 {title}
               </h3>
 
               {message && (
-                <p className="font-utility text-sm text-[#8A6A52] mt-2">
+                <p id="confirm-message" className="text-sm text-muted mt-2 leading-relaxed">
                   {message}
                 </p>
               )}
 
-              <div className="mt-6 flex justify-end gap-2">
+              <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
                 <button
+                  ref={cancelRef}
                   type="button"
                   onClick={onCancel}
                   disabled={loading}
-                  className="font-utility text-sm font-medium text-[#4A463F] hover:text-[#1C1A17] px-4 py-2 rounded-full transition-colors disabled:opacity-50"
+                  className="min-h-11 text-sm font-medium text-ink-soft hover:bg-cream px-4 rounded-[3px] transition-colors disabled:opacity-50"
                 >
                   {cancelText}
                 </button>
@@ -58,9 +77,9 @@ export default function ConfirmDialog({
                   type="button"
                   onClick={onConfirm}
                   disabled={loading}
-                  className="font-utility text-sm font-medium bg-[#1C1A17] text-[#F5F1EA] px-5 py-2 rounded-full hover:bg-[#332F29] transition-colors disabled:opacity-60"
+                  className="min-h-11 text-sm font-medium bg-ink text-cream px-5 rounded-[3px] hover:bg-ink-hover transition-colors disabled:opacity-60"
                 >
-                  {loading ? "..." : confirmText}
+                  {loading ? "Please wait..." : confirmText}
                 </button>
               </div>
             </motion.div>

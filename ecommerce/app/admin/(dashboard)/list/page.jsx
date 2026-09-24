@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -17,6 +18,7 @@ import Toast from "@/ui/Toast";
 import ConfirmDialog from "@/ui/ConfirmDialog";
 
 export default function ProductList() {
+  const router = useRouter();
   const [listData, setListData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -46,6 +48,10 @@ export default function ProductList() {
       setIsError(null);
 
       const res = await fetch("/api/list", { method: "GET" });
+      if (res.status === 401 || res.status === 403) {
+        router.replace("/admin/admin-login");
+        return;
+      }
       if (!res.ok) throw new Error("Failed to fetch products");
 
       const data = await res.json();
@@ -78,6 +84,10 @@ export default function ProductList() {
         body: JSON.stringify({ id }),
       });
 
+      if (res.status === 401 || res.status === 403) {
+        router.replace("/admin/admin-login");
+        return;
+      }
       if (!res.ok) throw new Error("Failed to delete product");
 
       setListData((prev) => prev.filter((p) => (p._id || p.id) !== id));

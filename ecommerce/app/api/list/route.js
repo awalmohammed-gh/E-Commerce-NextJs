@@ -1,22 +1,17 @@
 import { connectMongodb } from "@/lib/mongodb";
 import { Product } from "@/models/Product";
+import { requireAdmin } from "@/middleware/adminAuth";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+// Admin product list (all fields). The storefront uses /api/products.
+export async function GET(request) {
+  const { error } = await requireAdmin(request);
+  if (error) return error;
+
   try {
     await connectMongodb();
 
-    const list = await Product.find({});
-
-    if (list.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "No products found",
-        },
-        { status: 404 },
-      );
-    }
+    const list = await Product.find({}).sort({ createdAt: -1 });
 
     return NextResponse.json(
       {
@@ -40,6 +35,9 @@ export async function GET() {
 
 //function to delete a product
 export async function DELETE(request) {
+  const { error } = await requireAdmin(request);
+  if (error) return error;
+
   try {
     await connectMongodb();
 

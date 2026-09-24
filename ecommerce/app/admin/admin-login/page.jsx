@@ -63,6 +63,7 @@ export default function AdminLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validate()) return;
 
     try {
@@ -71,7 +72,7 @@ export default function AdminLogin() {
       const formData = new FormData();
 
       formData.append("email", adminLogin.email);
-      formData.append("password", adminLogin.password)
+      formData.append("password", adminLogin.password);
 
       const { data } = await axios.post("/api/auth/admin/login", formData);
 
@@ -81,14 +82,17 @@ export default function AdminLogin() {
 
       showSuccess("Welcome back, admin.");
 
-      // Redirect to admin dashboard
-      setTimeout(() => router.push("/admin"), 600);
+      setTimeout(() => {
+        router.push("/admin");
+      }, 600);
     } catch (error) {
       console.error(error);
+
       const message =
         error?.response?.data?.message ||
         error.message ||
         "Login failed. Please try again.";
+
       showError(message);
     } finally {
       setLoading(false);

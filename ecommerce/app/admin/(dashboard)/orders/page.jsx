@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -18,7 +19,7 @@ import axios from "axios";
 import LoadingSpinner from "@/ui/LoadingSpinner";
 import Toast from "@/ui/Toast";
 import ConfirmDialog from "@/ui/ConfirmDialog";
-import { useEcommerce } from "@/context/EcommerceContextProvider";
+import { isUnauthorized } from "@/lib/adminDashboardApi";
 
 /* ------------------------------------------------------------------
    Status options
@@ -42,6 +43,7 @@ const STATUS_STYLES = {
 const DEFAULT_STATUS = "Pending";
 
 export default function MyOrders() {
+  const router = useRouter();
   const [ordersData, setOrderData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isError, setIsError] = useState(null);
@@ -51,7 +53,8 @@ export default function MyOrders() {
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
 
-  const { products } = useEcommerce();
+  // Product names/prices for order lines, from the admin product list
+  const [products, setProducts] = useState([]);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
@@ -77,7 +80,14 @@ export default function MyOrders() {
       setLoading(true);
       setIsError(null);
 
-      const { data } = await axios.get("/api/orders");
+      const [{ data }, productsRes] = await Promise.all([
+        axios.get("/api/orders"),
+        axios.get("/api/list").catch(() => null),
+      ]);
+
+      if (productsRes?.data?.success) {
+        setProducts(productsRes.data.list || []);
+      }
 
       if (data.success) {
         setOrderData(data.orders || []);
@@ -85,6 +95,12 @@ export default function MyOrders() {
         throw new Error(data.message || "Failed to fetch orders");
       }
     } catch (error) {
+      // Orders are admin-only: send signed-out/expired sessions to login
+      if (isUnauthorized(error)) {
+        router.replace("/admin/admin-login");
+        return;
+      }
+
       console.error(error);
       const message =
         error?.response?.data?.message ||
@@ -288,6 +304,19 @@ export default function MyOrders() {
   };
 
   const flattenItems = (order) => {
+    // Orders placed after checkout pricing moved server-side carry a snapshot
+    if (order?.lineItems?.length) {
+      return order.lineItems.map((line) => ({
+        key: `${order._id}-${line.product}-${line.size}`,
+        productId: line.product,
+        size: line.size,
+        qty: line.quantity,
+        unitPrice: line.unitPrice,
+        lineTotal: line.lineTotal,
+        name: line.name,
+      }));
+    }
+
     if (!order?.items) return [];
 
     return Object.entries(order.items).flatMap(([productId, sizes]) => {

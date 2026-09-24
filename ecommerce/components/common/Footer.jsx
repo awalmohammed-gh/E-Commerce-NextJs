@@ -1,270 +1,133 @@
-"use client";
-
 import Link from "next/link";
-import { Heart, Shield, CreditCard, Truck, Clock } from "lucide-react";
-import {
-  FaFacebook,
-  FaInstagram,
-  FaTwitter,
-  FaYoutube,
-  FaTiktok,
-  FaCcVisa,
-  FaCcMastercard,
-  FaPaypal,
-  FaApplePay,
-} from "react-icons/fa";
+import Logo from "@/components/common/Logo";
+import { STORE_CATEGORIES, shopCategoryHref } from "@/lib/categories";
+import { formatCedis } from "@/lib/formatCurrency";
+import { getStoreInfo } from "@/lib/storeInfo";
 
-export default function Footer() {
-  const currentYear = new Date().getFullYear();
+const HELP_LINKS = [
+  { label: "Contact & help", href: "/contact" },
+  { label: "My orders", href: "/orders" },
+  { label: "Delivery addresses", href: "/account/addresses" },
+  { label: "About Eleoka", href: "/about" },
+];
+
+const ACCOUNT_LINKS = [
+  { label: "My account", href: "/account" },
+  { label: "Wishlist", href: "/account/wishlist" },
+  { label: "Settings", href: "/account/settings" },
+  { label: "Bag", href: "/shopping-cart" },
+];
+
+function Column({ title, children }) {
+  return (
+    <div>
+      <h2 className="eyebrow mb-4 text-cream/55">{title}</h2>
+      <ul className="space-y-1">{children}</ul>
+    </div>
+  );
+}
+
+function FooterLink({ href, children }) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className="inline-flex min-h-9 items-center text-[15px] text-cream/80 decoration-cream/40 underline-offset-4 transition-colors hover:text-cream hover:underline"
+      >
+        {children}
+      </Link>
+    </li>
+  );
+}
+
+/*
+  Store footer. Contact details and payment methods come from the admin
+  settings; anything the admin hasn't filled in is simply not shown.
+  No social links are listed because none are configured.
+*/
+export default async function Footer() {
+  const store = await getStoreInfo();
+  const year = new Date().getFullYear();
+  const hasContact = Boolean(store.email || store.phone || store.address);
 
   return (
-    <footer className="bg-[#0F172A] text-white">
-      {/* Main Footer */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {/* Brand Section */}
-          <div className="space-y-4">
-            <Link
-              href="/"
-              className="text-2xl sm:text-3xl font-bold inline-block"
-            >
-              <span className="text-white">ELE</span>
-              <span className="text-[#D98880]">OKA</span>
-            </Link>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Women&apos;s dresses made with care. Timeless silhouettes,
-              thoughtful fabrics, and pieces that make you feel like the best
-              version of yourself.
-            </p>
-            <div className="flex space-x-3 pt-2">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
-                aria-label="Facebook"
-              >
-                <FaFacebook className="w-5 h-5" />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
-                aria-label="Instagram"
-              >
-                <FaInstagram className="w-5 h-5" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
-                aria-label="Twitter"
-              >
-                <FaTwitter className="w-5 h-5" />
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
-                aria-label="YouTube"
-              >
-                <FaYoutube className="w-5 h-5" />
-              </a>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-6"
-                aria-label="TikTok"
-              >
-                <FaTiktok className="w-5 h-5" />
-              </a>
-            </div>
-          </div>
+    <footer className="bg-ink text-cream">
+      <div className="page-x grid grid-cols-2 gap-x-6 gap-y-12 py-14 md:grid-cols-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-x-12 lg:py-20">
+        {/* Brand */}
+        <div className="col-span-2 md:col-span-4 lg:col-span-1">
+          <Logo tone="light" />
+          <p className="mt-4 max-w-xs text-[15px] leading-relaxed text-cream/70">
+            {store.description ||
+              "A women's fashion boutique from Accra. Pieces chosen to be worn often and kept for years."}
+          </p>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">
-              Quick Links
-            </h3>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/shop"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  Shop All Dresses
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/faq"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/blog"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  Style Journal
-                </Link>
-              </li>
+          {hasContact && (
+            <ul className="mt-6 space-y-1.5 text-[15px] text-cream/80">
+              {store.email && (
+                <li>
+                  <a href={`mailto:${store.email}`} className="hover:text-cream hover:underline underline-offset-4">
+                    {store.email}
+                  </a>
+                </li>
+              )}
+              {store.phone && (
+                <li>
+                  <a href={`tel:${store.phone.replace(/[^\d+]/g, "")}`} className="hover:text-cream hover:underline underline-offset-4">
+                    {store.phone}
+                  </a>
+                </li>
+              )}
+              {store.address && <li className="text-cream/65">{store.address}</li>}
             </ul>
-          </div>
+          )}
+        </div>
 
-          {/* Customer Service */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">
-              Customer Service
-            </h3>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/returns"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  Returns Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/shipping"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  Shipping Info
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/size-guide"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  Size Guide
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                >
-                  Terms &amp; Conditions
-                </Link>
-              </li>
-            </ul>
-          </div>
+        <Column title="Shop">
+          <FooterLink href="/shop">Shop all</FooterLink>
+          {STORE_CATEGORIES.slice(0, 5).map((c) => (
+            <FooterLink key={c.slug} href={shopCategoryHref(c.slug)}>
+              {c.label}
+            </FooterLink>
+          ))}
+        </Column>
 
-          {/* Payment & Security */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">
-              Payment &amp; Security
-            </h3>
+        <Column title="More">
+          {STORE_CATEGORIES.slice(5).map((c) => (
+            <FooterLink key={c.slug} href={shopCategoryHref(c.slug)}>
+              {c.label}
+            </FooterLink>
+          ))}
+          <FooterLink href="/shop?onSale=true">On sale</FooterLink>
+          <FooterLink href="/shop?sort=newest">New in</FooterLink>
+        </Column>
 
-            {/* Payment Methods */}
-            <div className="mb-4">
-              <p className="text-gray-400 text-sm mb-3">We accept:</p>
-              <div className="flex flex-wrap gap-3">
-                <span className="bg-white/10 p-2 rounded-lg hover:bg-white/20 transition-all duration-300">
-                  <FaCcVisa className="w-8 h-6 text-white" />
-                </span>
-                <span className="bg-white/10 p-2 rounded-lg hover:bg-white/20 transition-all duration-300">
-                  <FaCcMastercard className="w-8 h-6 text-white" />
-                </span>
-                <span className="bg-white/10 p-2 rounded-lg hover:bg-white/20 transition-all duration-300">
-                  <FaPaypal className="w-8 h-6 text-white" />
-                </span>
-                <span className="bg-white/10 p-2 rounded-lg hover:bg-white/20 transition-all duration-300">
-                  <FaApplePay className="w-8 h-6 text-white" />
-                </span>
-              </div>
-            </div>
-
-            {/* Security Badges */}
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-gray-400 text-sm mb-3">Secure shopping:</p>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-gray-400 text-sm">
-                  <Shield className="w-4 h-4 text-green-400" />
-                  <span>SSL Secure Connection</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-400 text-sm">
-                  <Clock className="w-4 h-4 text-blue-400" />
-                  <span>24/7 Customer Support</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-400 text-sm">
-                  <Truck className="w-4 h-4 text-orange-400" />
-                  <span>Free delivery in Accra</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="col-span-2 grid grid-cols-2 gap-x-6 gap-y-12 md:col-span-2 lg:col-span-1 lg:grid-cols-1">
+          <Column title="Help">
+            {HELP_LINKS.map((l) => (
+              <FooterLink key={l.href} href={l.href}>
+                {l.label}
+              </FooterLink>
+            ))}
+          </Column>
+          <Column title="Account">
+            {ACCOUNT_LINKS.map((l) => (
+              <FooterLink key={l.href} href={l.href}>
+                {l.label}
+              </FooterLink>
+            ))}
+          </Column>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-white/10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400 text-sm text-center sm:text-left">
-              &copy; {currentYear} ELEOKA. All rights reserved.
-            </p>
-            <div className="flex items-center gap-1 text-gray-400 text-sm">
-              <span>Made with</span>
-              <Heart className="w-4 h-4 text-red-500 fill-red-500 animate-pulse" />
-              <span>by ELEOKA Team</span>
-            </div>
-            <div className="flex space-x-4 text-sm">
-              <Link
-                href="/privacy"
-                className="text-gray-400 hover:text-white transition-colors duration-200"
-              >
-                Privacy
-              </Link>
-              <span className="text-gray-600">|</span>
-              <Link
-                href="/terms"
-                className="text-gray-400 hover:text-white transition-colors duration-200"
-              >
-                Terms
-              </Link>
-              <span className="text-gray-600">|</span>
-              <Link
-                href="/sitemap"
-                className="text-gray-400 hover:text-white transition-colors duration-200"
-              >
-                Sitemap
-              </Link>
-            </div>
-          </div>
+      <div className="border-t border-cream/10">
+        <div className="page-x flex flex-col gap-3 py-6 text-[13px] text-cream/60 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            &copy; {year} {store.name}. All rights reserved.
+          </p>
+          <p>
+            Delivery {formatCedis(store.deliveryFee)} per order
+            {store.paymentMethods.length > 0 && <> &middot; {store.paymentMethods.join(", ")}</>}
+          </p>
         </div>
       </div>
     </footer>

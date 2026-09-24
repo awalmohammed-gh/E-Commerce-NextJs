@@ -87,6 +87,8 @@ export async function POST(request) {
           id: user._id,
           fullName: user.fullName,
           email: user.email,
+          phone: user.phone || "",
+          image: user.image || "",
         },
       },
       { status: 200 },

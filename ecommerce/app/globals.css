@@ -1,1 +1,176 @@
 @import "tailwindcss";
+
+/* ==================================================================
+   Eleoka storefront design system
+   Warm ink on paper, one restrained accent (rose), editorial serif
+   for display type and a quiet grotesk for everything else.
+   The admin dashboard keeps its own look; these tokens are opt-in.
+================================================================== */
+
+@theme {
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-work-sans), "Work Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Ink: text and primary surfaces */
+  --color-ink: #1c1a17;
+  --color-ink-soft: #3d3934;
+  --color-ink-hover: #332f29;
+  /* Supporting text (5.3:1 on paper) */
+  --color-muted: #6f5846;
+  /* Decorative brown, icons and hairlines only */
+  --color-taupe: #8a6a52;
+
+  /* Paper: backgrounds */
+  --color-paper: #fbf9f5;
+  --color-cream: #f5f1ea;
+  --color-sand: #ece5d9;
+  --color-line: #e3dbcd;
+
+  /* Accent - brand rose. rose-deep is the text-safe version (5:1) */
+  --color-rose: #d98880;
+  --color-rose-deep: #a4463e;
+  --color-rose-tint: #f6e4e1;
+
+  /* Status (always paired with an icon or label) */
+  --color-success: #3f6b4e;
+  --color-success-tint: #e6efe8;
+  --color-warning: #8a5a12;
+  --color-warning-tint: #f6ecd9;
+  --color-danger: #b3413a;
+  --color-danger-tint: #f8e4e2;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ------------------------------------------------------------------
+   Storefront base (applied by the store and auth layouts)
+------------------------------------------------------------------ */
+@layer base {
+  .storefront {
+    @apply bg-paper text-ink font-sans antialiased;
+    font-feature-settings: "kern", "liga";
+  }
+
+  .storefront :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  .storefront ::selection {
+    background: var(--color-rose-tint);
+    color: var(--color-ink);
+  }
+}
+
+/* Buttons: rectangular with a soft 3px radius, never pills.
+   A utility so the variants below can build on it. */
+@utility btn {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] px-6 text-[13px] font-medium tracking-[0.08em] uppercase transition-colors duration-200 select-none disabled:cursor-not-allowed disabled:opacity-45;
+}
+
+/* ------------------------------------------------------------------
+   Reusable pieces. Kept small on purpose: layout stays in markup.
+------------------------------------------------------------------ */
+@layer components {
+  /* Page width and gutters shared by every storefront section */
+  .page-x {
+    @apply mx-auto w-full max-w-340 px-4 sm:px-6 lg:px-10;
+  }
+
+  /* Small uppercase label above headings */
+  .eyebrow {
+    @apply text-[11px] font-medium uppercase tracking-[0.18em] text-muted;
+  }
+
+  .heading-display {
+    @apply font-display font-medium leading-[1.02] tracking-[-0.01em] text-ink;
+  }
+
+  .heading-section {
+    @apply font-display text-3xl font-medium leading-tight text-ink sm:text-4xl;
+  }
+
+  .btn-primary {
+    @apply btn bg-ink text-cream hover:bg-ink-hover;
+  }
+  .btn-secondary {
+    @apply btn border border-ink/25 bg-transparent text-ink hover:border-ink;
+  }
+  .btn-light {
+    @apply btn bg-paper text-ink hover:bg-cream;
+  }
+  .btn-sm {
+    @apply min-h-9 px-4 text-[12px];
+  }
+
+  /* Underlined text link */
+  .link {
+    @apply underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink;
+  }
+
+  /* Form fields */
+  .field-label {
+    @apply mb-1.5 block text-[13px] font-medium text-ink;
+  }
+  .field {
+    @apply block min-h-12 w-full rounded-[3px] border border-line bg-white px-3.5 text-[15px] text-ink transition-colors outline-none placeholder:text-muted/60 hover:border-ink/35 focus:border-ink disabled:opacity-60 aria-invalid:border-danger;
+  }
+  .field-error {
+    @apply mt-1.5 text-[13px] text-danger;
+  }
+  .field-hint {
+    @apply mt-1.5 text-[13px] text-muted;
+  }
+
+  /* Quiet bordered surface, for summaries and forms */
+  .panel {
+    @apply rounded-sm border border-line bg-white;
+  }
+
+  /* Loading placeholder block */
+  .skeleton {
+    @apply animate-pulse rounded-[3px] bg-sand;
+  }
+
+  /* Status label - pair with text, never colour alone */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-[3px] px-2 py-1 text-[11px] font-medium uppercase tracking-[0.08em];
+  }
+
+  /* Fixed region for toasts (bottom centre on phones, bottom right above) */
+  .toast-region {
+    @apply pointer-events-none fixed inset-x-4 bottom-4 z-400 flex justify-center sm:inset-x-auto sm:right-6 sm:bottom-6 sm:justify-end;
+  }
+  .toast-region > * {
+    @apply pointer-events-auto w-full sm:w-auto;
+  }
+
+  /* Horizontal scrollers without a visible scrollbar */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Slideshow: the active dot fills over the slide's duration (components/ui/Slideshow.jsx) */
+@keyframes slideshow-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storefront *,
+  .storefront *::before,
+  .storefront *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

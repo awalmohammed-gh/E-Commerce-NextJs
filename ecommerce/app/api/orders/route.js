@@ -1,8 +1,13 @@
 import { connectMongodb } from "@/lib/mongodb";
 import { Checkout } from "@/models/Checkout";
+import { requireAdmin } from "@/middleware/adminAuth";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+// Admin only: every customer's orders. Customers use /api/my-orders.
+export async function GET(request) {
+  const { error } = await requireAdmin(request);
+  if (error) return error;
+
   try {
     await connectMongodb();
 
@@ -24,6 +29,9 @@ export async function GET() {
 
 //delete order
 export async function DELETE(request) {
+  const { error } = await requireAdmin(request);
+  if (error) return error;
+
   try {
     await connectMongodb();
 
@@ -62,6 +70,9 @@ export async function DELETE(request) {
 // change order status
 
 export async function PATCH(request) {
+  const { error } = await requireAdmin(request);
+  if (error) return error;
+
   try {
     await connectMongodb();
 
@@ -122,7 +133,7 @@ export async function PATCH(request) {
     }
 
     const order = await Checkout.findByIdAndUpdate(id, updates, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
 

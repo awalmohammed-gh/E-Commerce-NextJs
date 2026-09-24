@@ -13,6 +13,26 @@ const checkoutSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Snapshot of each line at the time of purchase (server-priced)
+    lineItems: {
+      type: [
+        {
+          _id: false,
+          product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+          name: String,
+          image: String,
+          size: String,
+          quantity: Number,
+          unitPrice: Number,
+          lineTotal: Number,
+        },
+      ],
+      default: undefined,
+    },
+
+    subtotal: { type: Number },
+    deliveryFee: { type: Number },
+
     address: {
       type: Object,
       required: true,

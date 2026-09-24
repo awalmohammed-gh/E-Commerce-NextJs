@@ -1,48 +1,53 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import { getAdminAuth } from "@/middleware/adminAuth";
+import { connectMongodb } from "@/lib/mongodb";
+import {
+  getAdminSessionVersion,
+  getConfiguredAdminEmail,
+  issueAdminSession,
+  verifyAdminPassword,
+} from "@/lib/adminSession";
 
 export async function POST(request) {
   try {
-    const formData = await request.formData();
+  const formData = await request.formData();
 
-    const email = formData.get("email");
-    const password = formData.get("password");
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = formData.get("password");
 
-    if (!email || !password) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Email and password are required",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (
-      email !== process.env.ADMIN_EMAIL ||
-      password !== process.env.ADMIN_PSD
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid email or password",
-        },
-        { status: 401 },
-      );
-    }
-
-    // Create JWT
-    const token = jwt.sign(
+  if (!email || !password) {
+    return NextResponse.json(
       {
-        email,
-        role: "admin",
+        success: false,
+        message: "Email and password are required",
       },
-      process.env.JWT_KEY,
-      {
-        expiresIn: "1d",
-      },
+      { status: 400 },
     );
+  }
+
+  const adminEmail = getConfiguredAdminEmail();
+
+  if (!adminEmail || !process.env.JWT_KEY) {
+    console.error("Admin login error: ADMIN_EMAIL or JWT_KEY is not set");
+    return NextResponse.json(
+      { success: false, message: "Admin login is not configured" },
+      { status: 500 },
+    );
+  }
+
+  await connectMongodb();
+
+  // Password is checked against the MongoDB hash once it has been
+  // changed from Settings, otherwise against ADMIN_PSD
+  if (email !== adminEmail || !(await verifyAdminPassword(email, password))) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid email or password",
+      },
+      { status: 401 },
+    );
+  }
 
     // Create response
     const response = NextResponse.json(
@@ -53,13 +58,10 @@ export async function POST(request) {
       { status: 200 },
     );
 
-    // Set cookie
-    response.cookies.set("adminToken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24,
-      path: "/",
+    // Sign JWT and set the adminToken cookie
+    await issueAdminSession(response, {
+      email,
+      sessionVersion: await getAdminSessionVersion(email),
     });
 
     return response;

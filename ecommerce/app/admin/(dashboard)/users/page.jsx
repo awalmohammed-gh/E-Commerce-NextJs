@@ -157,7 +157,7 @@ export default function Users() {
   };
 
   const getPrimaryAddress = (user) =>
-    user.addresses?.find((a) => a.id === user.selectedAddressId) ||
+    user.addresses?.find((a) => a.isDefault) ||
     user.addresses?.[0] ||
     null;
 

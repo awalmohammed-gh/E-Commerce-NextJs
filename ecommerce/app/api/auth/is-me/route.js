@@ -19,7 +19,12 @@ export async function GET(request) {
       );
     }
 
-    const user = await Users.findById(authUser.id);
+    const user = await Users.findById(authUser.id, {
+      fullName: 1,
+      email: 1,
+      phone: 1,
+      image: 1,
+    }).lean();
 
     if (!user) {
       return NextResponse.json(
@@ -38,6 +43,8 @@ export async function GET(request) {
         id: user._id.toString(),
         fullName: user.fullName,
         email: user.email,
+        phone: user.phone || "",
+        image: user.image || "",
       },
     });
   } catch (error) {

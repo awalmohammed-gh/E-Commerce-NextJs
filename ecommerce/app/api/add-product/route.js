@@ -1,6 +1,7 @@
 import { connectCloudinary } from "@/lib/cloudinary";
 import { connectMongodb } from "@/lib/mongodb";
 import { Product } from "@/models/Product";
+import { requireAdmin } from "@/middleware/adminAuth";
 import {v2 as cloudinary} from "cloudinary"
 import { NextResponse } from "next/server";
 
@@ -23,6 +24,9 @@ const uploadImage = (buffer) => {
 };
 
 export async function POST(request) {
+     const { error } = await requireAdmin(request);
+     if (error) return error;
+
      try {
        await connectMongodb()
        connectCloudinary();
