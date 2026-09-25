@@ -66,15 +66,15 @@ function HeroSlide({ slide, index, active }) {
 /*
   Homepage hero as a cover page: HERO_COVER fills the section edge to
   edge under the transparent navbar (negative top margin = bar height),
-  most of the first screen, like a fashion campaign cover (580-780px
-  tall on larger screens, so very tall monitors do not stretch it),
+  90% of the first screen, like a fashion campaign cover (at least
+  540-580px, capped at 960px only on very large monitors),
   darkened by overlays so light text reads on it, while the HERO_SLIDES
   copy rotates over the empty wall on the left. Auto-advances with no
   pause button (it pauses on hover/focus and for reduced motion).
 */
 export default function HomeHero() {
   return (
-    <section className="on-dark relative -mt-16 h-[78svh] min-h-[540px] overflow-hidden bg-espresso-deep text-paper md:h-[84svh] md:max-h-[780px] md:min-h-[580px] lg:-mt-18">
+    <section className="on-dark relative -mt-16 h-[90svh] min-h-[540px] overflow-hidden bg-espresso-deep text-paper md:min-h-[580px] 2xl:max-h-[960px] lg:-mt-18">
       <h1 className="sr-only">Eleoka, women&apos;s fashion from Accra</h1>
 
       {/* Cover photograph: a slow settle on load, then still */}

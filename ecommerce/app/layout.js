@@ -82,8 +82,12 @@ export default function RootLayout({ children }) {
     <html
       lang="en"
       className={`${poppins.variable} ${cormorant.variable} ${manrope.variable}`}
+      // Browser extensions (e.g. Grammarly) add attributes to <html>/<body>
+      // before React loads. This ignores attribute differences on these two
+      // elements only; mismatches inside the page are still reported.
+      suppressHydrationWarning
     >
-      <body className={poppins.className}>
+      <body className={poppins.className} suppressHydrationWarning>
         <MotionProvider>
           <EcommerceContextProvider>{children}</EcommerceContextProvider>
         </MotionProvider>
