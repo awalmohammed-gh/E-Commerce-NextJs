@@ -74,7 +74,7 @@ function HeroSlide({ slide, index, active }) {
 */
 export default function HomeHero() {
   return (
-    <section className="on-dark relative -mt-16 h-[90svh] min-h-[540px] overflow-hidden bg-espresso-deep text-paper md:min-h-[580px] 2xl:max-h-[960px] lg:-mt-18">
+    <section className="on-dark relative -mt-16 h-[90svh] max-h-[1000px] min-h-[540px] overflow-hidden bg-espresso-deep text-paper md:min-h-[580px] 2xl:max-h-[960px] lg:-mt-18">
       <h1 className="sr-only">Eleoka, women&apos;s fashion from Accra</h1>
 
       {/* Cover photograph: a slow settle on load, then still */}
