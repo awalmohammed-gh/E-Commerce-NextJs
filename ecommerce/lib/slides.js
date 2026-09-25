@@ -1,3 +1,4 @@
+import heroCover from "@/data/images/heroCover.jpg";
 import heroBanner1 from "@/data/images/heroBanner1.png";
 import heroBanner2 from "@/data/images/heroBanner2.png";
 import heroBanner3 from "@/data/images/heroBanner3.png";
@@ -17,6 +18,19 @@ import shopPeach from "@/data/images/shopBanner1.jpg";
              product cut-outs sit directly on it
   primary / secondary: { label, href } calls to action (secondary optional)
 */
+/*
+  Homepage cover photograph. It stays put behind the hero while the
+  HERO_SLIDES copy below rotates over it.
+  focus / focusMobile: object-position, keeping the rails of dresses in
+  frame on wide screens and the hanging dresses on phones.
+*/
+export const HERO_COVER = {
+  image: heroCover,
+  alt: "A boutique wall of dresses, striped tops and folded knits on wooden hangers and shelves",
+  focus: "50% 45%",
+  focusMobile: "48% 50%",
+};
+
 // Shown in this order: heroBanner1 -> 2 -> 3 -> 4, then back to 1
 export const HERO_SLIDES = [
   {

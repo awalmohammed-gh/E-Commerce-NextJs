@@ -9,7 +9,7 @@ import { SHOP_SLIDES } from "@/lib/slides";
 // One campaign slide: photograph with a short caption and link (real text)
 function ShopSlide({ slide, active, priority, loadImages }) {
   return (
-    <figure className="relative h-full min-h-full overflow-hidden bg-sand">
+    <figure className="relative h-full min-h-full overflow-hidden bg-sand sm:rounded-card">
       {loadImages && (
         <Image
           src={slide.image}
@@ -24,15 +24,27 @@ function ShopSlide({ slide, active, priority, loadImages }) {
         />
       )}
       {/* Scrim strong enough for cream text on light photographs */}
-      <figcaption className="absolute inset-x-0 bottom-0 bg-linear-to-t from-ink/85 via-ink/55 to-transparent px-5 pt-20 pb-14 text-cream sm:px-6 [text-shadow:0_1px_12px_rgba(28,26,23,0.35)]">
-        <p className="text-[11px] font-medium tracking-[0.18em] text-cream/85 uppercase">{slide.eyebrow}</p>
-        <p className="mt-1 font-display text-2xl leading-tight sm:text-[28px]">{slide.title}</p>
+      <figcaption className="scrim-bottom absolute inset-x-0 bottom-0 px-5 pt-24 pb-16 text-paper sm:px-7">
+        <p
+          className={`glass-tint inline-flex rounded-full px-3 py-1 text-[10.5px] font-semibold tracking-[0.2em] uppercase transition-[opacity,transform] duration-700 ease-out-soft ${
+            active ? "translate-y-0 opacity-100 delay-150" : "translate-y-3 opacity-0"
+          }`}
+        >
+          {slide.eyebrow}
+        </p>
+        <p
+          className={`mt-3 font-display text-[28px] leading-[1.02] transition-[opacity,transform] duration-700 ease-out-soft sm:text-[34px] ${
+            active ? "translate-y-0 opacity-100 delay-250" : "translate-y-3 opacity-0"
+          }`}
+        >
+          {slide.title}
+        </p>
         <Link
           href={slide.primary.href}
-          className="mt-2 inline-flex min-h-9 items-center gap-1.5 text-[13px] font-medium tracking-[0.08em] uppercase underline-offset-4 hover:underline"
+          className="group mt-2 inline-flex min-h-10 items-center gap-2 text-[12px] font-semibold tracking-[0.14em] uppercase"
         >
-          {slide.primary.label}
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <span className="underline decoration-paper/40 underline-offset-[6px] group-hover:decoration-terracotta-light">{slide.primary.label}</span>
+          <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
         </Link>
       </figcaption>
     </figure>
@@ -48,11 +60,11 @@ function ShopSlide({ slide, active, priority, loadImages }) {
 */
 export default function ShopBanner({ title, eyebrow, description, crumbs = [], showSlidesOnMobile = true }) {
   return (
-    <section className="border-b border-line bg-cream">
+    <section className="relative overflow-hidden border-b border-line bg-ivory-fade">
       <div className="page-x grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_440px] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_540px]">
-        <div className="py-8 sm:py-10 lg:py-14">
+        <div className="flex flex-col justify-center py-8 sm:py-10 lg:py-16">
           <nav aria-label="Breadcrumb">
-            <ol className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
+            <ol className="flex flex-wrap items-center gap-1.5 text-[12px] font-medium tracking-[0.06em] text-muted uppercase">
               <li>
                 <Link href="/" className="hover:text-ink">
                   Home
@@ -75,26 +87,26 @@ export default function ShopBanner({ title, eyebrow, description, crumbs = [], s
             </ol>
           </nav>
 
-          {eyebrow && <p className="eyebrow mt-6">{eyebrow}</p>}
-          <h1 className={`heading-display wrap-break-word text-[40px] sm:text-5xl lg:text-6xl ${eyebrow ? "mt-2" : "mt-6"}`}>
+          {eyebrow && <p className="kicker mt-7">{eyebrow}</p>}
+          <h1 className={`heading-display wrap-break-word text-[46px] sm:text-[60px] lg:text-[76px] ${eyebrow ? "mt-3" : "mt-7"}`}>
             {title}
           </h1>
           {description && (
-            <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-ink-soft sm:text-base">{description}</p>
+            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-ink-soft sm:text-base">{description}</p>
           )}
         </div>
 
-        <div className={`-mx-4 pb-6 sm:mx-0 sm:pb-8 lg:block lg:pb-0 ${showSlidesOnMobile ? "" : "hidden"}`}>
+        <div className={`-mx-4 pb-6 sm:mx-0 sm:pb-8 lg:block lg:py-8 ${showSlidesOnMobile ? "" : "hidden"}`}>
           <Slideshow
             label="Collections and offers"
             slides={SHOP_SLIDES}
             interval={6000}
             tone="light"
             className="relative h-full"
-            trackClassName="aspect-16/10 sm:aspect-2/1 lg:aspect-auto lg:h-full lg:min-h-80"
+            trackClassName="aspect-16/10 sm:aspect-2/1 lg:aspect-auto lg:h-full lg:min-h-96"
             renderSlide={(slide, state) => <ShopSlide slide={slide} {...state} />}
             renderControls={(controls) =>
-              controls && <div className="absolute right-2 bottom-2 z-20 sm:right-3">{controls}</div>
+              controls && <div className="absolute right-3 bottom-3 z-20 sm:right-4 sm:bottom-4">{controls}</div>
             }
           />
         </div>

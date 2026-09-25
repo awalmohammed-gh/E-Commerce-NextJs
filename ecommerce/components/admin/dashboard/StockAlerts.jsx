@@ -33,7 +33,7 @@ export default function StockAlerts({ products, loading = false, error, onRetry 
       />
 
       {loading ? (
-        <div className={`${CARD_X} space-y-3 pb-5`}>
+        <div className={`${CARD_X} space-y-3 pb-4`}>
           {Array.from({ length: 3 }, (_, i) => (
             <Skeleton key={i} className="h-10 w-full" />
           ))}

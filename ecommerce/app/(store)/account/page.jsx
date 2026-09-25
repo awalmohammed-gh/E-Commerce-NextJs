@@ -92,7 +92,7 @@ export default function AccountOverview() {
           Latest order
         </h2>
         {!ready || orders.status === "loading" ? (
-          <div className="skeleton h-28" />
+          <div className="skeleton h-28 rounded-card" />
         ) : orders.status === "error" ? (
           <p className="panel px-5 py-6 text-[15px] text-muted">
             Your orders didn&apos;t load. <Link href="/orders" className="link text-ink">Open My Orders</Link> to try again.
@@ -113,7 +113,7 @@ export default function AccountOverview() {
               {latest.lines.slice(0, 3).map((line) => (
                 <span
                   key={`${line.productId}-${line.size}`}
-                  className="relative h-20 w-15 overflow-hidden rounded-xs bg-sand ring-2 ring-white"
+                  className="relative h-20 w-15 overflow-hidden rounded-field bg-sand ring-2 ring-white"
                 >
                   <ProductImage src={line.image} alt="" sizes="60px" className="object-cover" />
                 </span>
@@ -148,7 +148,7 @@ export default function AccountOverview() {
             const summary = summaries[link.href];
             return (
               <li key={link.href}>
-                <Link href={link.href} className="group flex min-h-18 items-center gap-4 py-4 transition-colors hover:bg-cream/60 sm:px-3">
+                <Link href={link.href} className="group flex min-h-18 items-center gap-4 rounded-field py-4 transition-colors hover:bg-cream sm:px-4">
                   <Icon className="h-5 w-5 shrink-0 text-taupe" strokeWidth={1.5} aria-hidden="true" />
                   <span className="min-w-0 flex-1">
                     <span className="block text-[16px] text-ink">{link.label}</span>

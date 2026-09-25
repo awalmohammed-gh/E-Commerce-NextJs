@@ -1,3 +1,7 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import { badgeSwap } from "@/lib/adminMotion";
 import {
   DEFAULT_ORDER_STATUS,
   ORDER_STATUS_META,
@@ -30,9 +34,16 @@ export default function Badge({ tone = "neutral", dot = true, className = "", ch
   );
 }
 
+// When the status changes (e.g. Processing -> Shipped) the new badge fades in
 export function OrderStatusBadge({ status }) {
   const label = status || DEFAULT_ORDER_STATUS;
-  return <Badge tone={ORDER_STATUS_META[label]?.tone || "neutral"}>{label}</Badge>;
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.span key={label} className="inline-flex" {...badgeSwap}>
+        <Badge tone={ORDER_STATUS_META[label]?.tone || "neutral"}>{label}</Badge>
+      </motion.span>
+    </AnimatePresence>
+  );
 }
 
 export function PaymentBadge({ paid }) {

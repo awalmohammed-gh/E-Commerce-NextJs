@@ -3,6 +3,8 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
+import { VIEWPORT, cardVariants } from "@/lib/storeMotion";
 import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
 import ProductCard from "@/components/card/ProductCard";
 import {
@@ -40,10 +42,10 @@ export default function ShopPage() {
     <Suspense
       fallback={
         <>
-          <div className="border-b border-line bg-cream" aria-hidden="true">
+          <div className="border-b border-line bg-ivory-fade" aria-hidden="true">
             <div className="page-x space-y-4 py-10 lg:py-14">
               <div className="skeleton h-3 w-32" />
-              <div className="skeleton h-12 w-64" />
+              <div className="skeleton h-16 w-72" />
             </div>
           </div>
           <div className="page-x py-10">
@@ -206,10 +208,10 @@ function ShopContent() {
         showSlidesOnMobile={!hasFilters}
       />
 
-      {/* Category bar */}
-      <div className="border-b border-line bg-paper">
+      {/* Category bar: stays under the navbar while browsing */}
+      <div className="sticky top-16 z-40 border-b border-line/70 bg-paper/85 backdrop-blur-xl backdrop-saturate-150 lg:top-18">
         <nav aria-label="Categories" className="page-x">
-          <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 py-3 no-scrollbar sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-wrap lg:px-0">
+          <ul className="-mx-4 flex gap-1.5 overflow-x-auto px-4 py-2.5 no-scrollbar sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-wrap lg:px-0">
             {[{ slug: "", label: "All" }, ...STORE_CATEGORIES].map((c) => {
               const active = c.slug ? same(c.slug, filters.category) || same(c.label, filters.category) : !filters.category;
               return (
@@ -218,8 +220,8 @@ function ShopContent() {
                     href={c.slug ? shopCategoryHref(c.slug) : "/shop"}
                     scroll={false}
                     aria-current={active ? "page" : undefined}
-                    className={`inline-flex min-h-10 items-center rounded-[3px] px-3.5 text-[14px] whitespace-nowrap transition-colors ${
-                      active ? "bg-ink text-cream" : "text-ink-soft hover:bg-cream hover:text-ink"
+                    className={`inline-flex min-h-10 items-center rounded-full px-4 text-[13.5px] whitespace-nowrap transition-colors duration-300 ${
+                      active ? "bg-ink font-medium text-paper" : "text-ink-soft hover:bg-cream hover:text-ink"
                     }`}
                   >
                     {c.label}
@@ -231,10 +233,10 @@ function ShopContent() {
         </nav>
       </div>
 
-      <div className="page-x pt-6 pb-16 sm:pb-24">
+      <div className="page-x pt-7 pb-16 sm:pt-9 sm:pb-24">
         {/* Toolbar */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <p className="order-2 text-[14px] text-muted md:order-1" aria-live="polite">
+          <p className="order-2 text-[12px] font-semibold tracking-[0.14em] text-muted uppercase md:order-1" aria-live="polite">
             {loading ? "Loading products..." : `${totalProducts} ${totalProducts === 1 ? "product" : "products"}`}
           </p>
 
@@ -248,7 +250,7 @@ function ShopContent() {
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search products"
                 enterKeyHint="search"
-                className="field min-h-11 pl-10 text-[14px]"
+                className="field min-h-11 rounded-full pl-10 text-[14px]"
               />
             </label>
 
@@ -256,7 +258,7 @@ function ShopContent() {
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
-                className="btn-secondary min-h-11 px-4 normal-case tracking-normal text-[14px] font-normal"
+                className="btn-secondary min-h-11 px-5 text-[14px] font-medium tracking-normal normal-case"
                 aria-haspopup="dialog"
               >
                 <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
@@ -268,7 +270,7 @@ function ShopContent() {
                 <select
                   value={filters.sort}
                   onChange={(e) => updateFilters({ sort: e.target.value === "newest" ? "" : e.target.value })}
-                  className="field min-h-11 cursor-pointer appearance-none pr-9 text-[14px] sm:w-52"
+                  className="field min-h-11 cursor-pointer appearance-none rounded-full pr-10 pl-5 text-[14px] sm:w-56"
                 >
                   {SORT_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -276,7 +278,7 @@ function ShopContent() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-taupe" aria-hidden="true" />
+                <ChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-taupe" aria-hidden="true" />
               </label>
             </div>
           </div>
@@ -293,7 +295,7 @@ function ShopContent() {
                     setSearchInput("");
                     updateFilters({ search: "" });
                   }}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-[3px] bg-sand pr-2 pl-3 text-[13px] text-ink hover:bg-line"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-terracotta-tint pr-2.5 pl-3.5 text-[13px] font-medium text-terracotta-deep transition-colors hover:bg-terracotta hover:text-white"
                   aria-label={`Remove search ${filters.search}`}
                 >
                   Search: {filters.search}
@@ -306,7 +308,7 @@ function ShopContent() {
                 <button
                   type="button"
                   onClick={() => updateFilters({ subCategory: "" })}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-[3px] bg-sand pr-2 pl-3 text-[13px] text-ink hover:bg-line"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-terracotta-tint pr-2.5 pl-3.5 text-[13px] font-medium text-terracotta-deep transition-colors hover:bg-terracotta hover:text-white"
                   aria-label={`Remove ${filters.subCategory} filter`}
                 >
                   {filters.subCategory}
@@ -319,7 +321,7 @@ function ShopContent() {
                 <button
                   type="button"
                   onClick={() => updateFilters({ [key]: false })}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-[3px] bg-sand pr-2 pl-3 text-[13px] text-ink hover:bg-line"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-terracotta-tint pr-2.5 pl-3.5 text-[13px] font-medium text-terracotta-deep transition-colors hover:bg-terracotta hover:text-white"
                   aria-label={`Remove ${label} filter`}
                 >
                   {label}
@@ -328,7 +330,7 @@ function ShopContent() {
               </li>
             ))}
             <li>
-              <button type="button" onClick={clearFilters} className="min-h-9 px-2 text-[13px] text-ink-soft link">
+              <button type="button" onClick={clearFilters} className="link min-h-9 px-2 text-[13px] text-ink-soft">
                 Clear all
               </button>
             </li>
@@ -336,7 +338,7 @@ function ShopContent() {
         )}
 
         {/* Results */}
-        <div className="mt-8">
+        <div className="mt-9">
           {loading ? (
             <ProductGridSkeleton count={8} />
           ) : error ? (
@@ -367,9 +369,16 @@ function ShopContent() {
           ) : (
             <ul className={PRODUCT_GRID}>
               {products.map((product, index) => (
-                <li key={product._id}>
+                <motion.li
+                  key={product._id}
+                  variants={cardVariants}
+                  custom={index}
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={VIEWPORT}
+                >
                   <ProductCard product={product} priority={index < 4} />
-                </li>
+                </motion.li>
               ))}
             </ul>
           )}

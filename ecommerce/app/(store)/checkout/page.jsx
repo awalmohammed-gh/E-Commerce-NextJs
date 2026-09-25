@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Banknote, Check, CreditCard, Loader2, Lock, Pencil, Plus, ShoppingBag, Smartphone } from "lucide-react";
 import { useEcommerce } from "@/context/EcommerceContextProvider";
 import AddressModal from "@/components/modals/AddressModal";
@@ -12,6 +13,7 @@ import ProductImage from "@/components/card/ProductImage";
 import { EmptyState } from "@/components/ui/States";
 import Toast from "@/ui/Toast";
 import { formatCedis } from "@/lib/formatCurrency";
+import { messageVariants } from "@/lib/storeMotion";
 
 const PAYMENT_METHODS = [
   { id: "Mobile Money", label: "Mobile Money", description: "MTN, Telecel, AirtelTigo", icon: Smartphone },
@@ -23,18 +25,30 @@ function Step({ number, title, aside, children, error }) {
   return (
     <section className="border-t border-line py-8 first:border-t-0 first:pt-0" aria-labelledby={`step-${number}`}>
       <div className="mb-5 flex items-baseline justify-between gap-4">
-        <h2 id={`step-${number}`} className="flex items-baseline gap-3 font-display text-2xl text-ink sm:text-[28px]">
-          <span className="text-[13px] font-sans font-medium text-muted">{number}</span>
+        <h2 id={`step-${number}`} className="flex items-center gap-3.5 font-display text-[28px] leading-none text-ink sm:text-[32px]">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink font-sans text-[13px] font-semibold text-paper">
+            {number}
+          </span>
           {title}
         </h2>
         {aside}
       </div>
-      {error && (
-        <p role="alert" className="mb-4 flex items-center gap-2 text-[14px] text-danger">
-          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {error}
-        </p>
-      )}
+      <AnimatePresence initial={false}>
+        {error && (
+          <motion.p
+            key={error}
+            variants={messageVariants}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            role="alert"
+            className="alert-error mb-4 items-center"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
       {children}
     </section>
   );
@@ -44,14 +58,14 @@ function Step({ number, title, aside, children, error }) {
 function Choice({ selected, onSelect, children, name }) {
   return (
     <label
-      className={`flex cursor-pointer items-start gap-3.5 rounded-[3px] border bg-white p-4 transition-colors ${
-        selected ? "border-ink" : "border-line hover:border-ink/40"
+      className={`flex cursor-pointer items-start gap-3.5 rounded-card border bg-white p-4 transition-[border-color,box-shadow] duration-300 sm:p-5 ${
+        selected ? "border-ink shadow-soft ring-1 ring-ink" : "border-line hover:border-ink/40"
       }`}
     >
       <input type="radio" name={name} checked={selected} onChange={onSelect} className="peer sr-only" />
       <span
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink ${
-          selected ? "border-ink bg-ink text-cream" : "border-ink/30"
+          selected ? "border-terracotta-deep bg-terracotta-deep text-white" : "border-ink/30"
         }`}
         aria-hidden="true"
       >
@@ -67,12 +81,12 @@ function CheckoutSkeleton() {
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_400px]" aria-busy="true" aria-label="Loading checkout">
       <div className="space-y-4">
         <div className="skeleton h-7 w-48" />
-        <div className="skeleton h-28" />
+        <div className="skeleton h-28 rounded-card" />
         <div className="skeleton mt-8 h-7 w-40" />
-        <div className="skeleton h-16" />
-        <div className="skeleton h-16" />
+        <div className="skeleton h-18 rounded-card" />
+        <div className="skeleton h-18 rounded-card" />
       </div>
-      <div className="skeleton h-80" />
+      <div className="skeleton h-80 rounded-card" />
     </div>
   );
 }
@@ -185,7 +199,7 @@ export default function CheckoutPage() {
       type="button"
       onClick={handlePlaceOrder}
       disabled={placing || hasIssues}
-      className={`btn-primary min-h-12 ${className}`}
+      className={`btn-accent min-h-13 ${className}`}
     >
       {placing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Lock className="h-3.5 w-3.5" aria-hidden="true" />}
       {placing ? "Placing order" : `Place order · ${formatCedis(cart.total)}`}
@@ -194,9 +208,15 @@ export default function CheckoutPage() {
 
   return (
     <div className="page-x pt-8 pb-32 sm:pt-12 lg:pb-24">
-      <header className="mb-8 flex items-end justify-between gap-4 border-b border-line pb-5 sm:mb-10">
-        <h1 className="heading-display text-4xl sm:text-5xl">Checkout</h1>
-        <Link href="/shopping-cart" className="link text-[14px] text-ink-soft">
+      <header className="mb-8 flex items-end justify-between gap-4 border-b border-line pb-6 sm:mb-10">
+        <div>
+          <p className="kicker mb-3">
+            <Lock className="h-3 w-3" aria-hidden="true" />
+            Secure checkout
+          </p>
+          <h1 className="heading-display text-[44px] sm:text-[64px]">Checkout</h1>
+        </div>
+        <Link href="/shopping-cart" className="link pb-2 text-[14px] text-ink-soft">
           Back to bag
         </Link>
       </header>
@@ -226,12 +246,12 @@ export default function CheckoutPage() {
               )}
 
               {addressesLoading ? (
-                <div className="skeleton h-28" />
+                <div className="skeleton h-28 rounded-card" />
               ) : !selectedAddress ? (
                 <button
                   type="button"
                   onClick={openNewAddress}
-                  className="flex min-h-20 w-full items-center justify-center gap-2 rounded-[3px] border border-dashed border-ink/30 text-[15px] text-ink transition-colors hover:border-ink"
+                  className="flex min-h-24 w-full items-center justify-center gap-2 rounded-card border border-dashed border-ink/30 bg-white/50 text-[15px] font-medium text-ink transition-colors hover:border-terracotta-deep hover:bg-white hover:text-terracotta-deep"
                 >
                   <Plus className="h-4 w-4" aria-hidden="true" />
                   Add a delivery address
@@ -266,9 +286,9 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-[3px] border border-line bg-white p-5">
+                <div className="rounded-card border border-line bg-white p-5 sm:p-6">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <span className="flex items-center gap-2 text-[13px] font-medium tracking-[0.08em] uppercase">
+                    <span className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.16em] uppercase">
                       {selectedAddress.label}
                       {selectedAddress.isDefault && <span className="badge bg-cream px-1.5 py-0.5 text-muted">Default</span>}
                     </span>
@@ -311,7 +331,9 @@ export default function CheckoutPage() {
                           <span className="block text-[15px] font-medium text-ink">{method.label}</span>
                           <span className="block text-[14px] text-muted">{method.description}</span>
                         </span>
-                        <Icon className="h-5 w-5 shrink-0 text-taupe" strokeWidth={1.5} aria-hidden="true" />
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cream text-terracotta-deep">
+                          <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+                        </span>
                       </span>
                     </Choice>
                   );
@@ -333,7 +355,7 @@ export default function CheckoutPage() {
               <ul className="divide-y divide-line">
                 {cart.items.map((item) => (
                   <li key={`${item.productId}-${item.size}`} className="flex items-center gap-4 py-3.5 first:pt-0">
-                    <span className="relative h-20 w-15 shrink-0 overflow-hidden rounded-xs bg-sand">
+                    <span className="relative h-20 w-16 shrink-0 overflow-hidden rounded-field bg-sand">
                       <ProductImage src={item.image} alt="" sizes="60px" className="object-cover" />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -353,8 +375,8 @@ export default function CheckoutPage() {
           </div>
 
           {/* Summary */}
-          <aside className="panel p-6 lg:sticky lg:top-28" aria-labelledby="checkout-summary">
-            <h2 id="checkout-summary" className="text-[13px] font-medium tracking-[0.08em] uppercase">
+          <aside className="rounded-card bg-cream p-6 sm:p-7 lg:sticky lg:top-28" aria-labelledby="checkout-summary">
+            <h2 id="checkout-summary" className="font-display text-[28px] leading-none">
               Order summary
             </h2>
             <dl className="mt-5 space-y-3 text-[15px]">
@@ -370,12 +392,12 @@ export default function CheckoutPage() {
               </div>
               <div className="flex items-baseline justify-between border-t border-line pt-4">
                 <dt className="font-medium text-ink">Total</dt>
-                <dd className="text-2xl font-medium text-ink">{formatCedis(cart.total)}</dd>
+                <dd className="text-2xl font-semibold text-ink tabular-nums">{formatCedis(cart.total)}</dd>
               </div>
             </dl>
 
             {(selectedAddress || paymentMethod) && (
-              <dl className="mt-5 space-y-3 border-t border-line pt-5 text-[14px]">
+              <dl className="mt-5 space-y-3 rounded-field bg-paper p-4 text-[14px]">
                 {selectedAddress && (
                   <div>
                     <dt className="text-muted">Deliver to</dt>
@@ -403,7 +425,7 @@ export default function CheckoutPage() {
 
       {/* Phones and tablets: total and the final action stay in reach */}
       {!loading && (
-        <div className="fixed inset-x-0 bottom-0 z-90 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur-sm lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-90 border-t border-line/70 bg-paper/85 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl backdrop-saturate-150 lg:hidden">
           <div className="mx-auto max-w-xl">{placeButton("w-full")}</div>
         </div>
       )}

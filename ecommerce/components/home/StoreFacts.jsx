@@ -1,5 +1,6 @@
 import { PackageCheck, Truck, Wallet } from "lucide-react";
 import { formatCedis } from "@/lib/formatCurrency";
+import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
 
 /*
   Three practical facts, each true of the current checkout:
@@ -30,17 +31,19 @@ export default function StoreFacts({ deliveryFee, paymentMethods = [] }) {
 
   return (
     <section className="page-x" aria-label="Shopping with Eleoka">
-      <ul className="grid grid-cols-1 divide-y divide-line border-y border-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <RevealGroup as="ul" className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-5">
         {facts.map(({ icon: Icon, title, text }) => (
-          <li key={title} className="flex items-start gap-4 py-6 sm:px-6 sm:py-8 sm:first:pl-0 sm:last:pr-0">
-            <Icon className="mt-0.5 h-5 w-5 shrink-0 text-taupe" strokeWidth={1.5} aria-hidden="true" />
+          <RevealItem as="li" key={title} className="flex items-start gap-4 rounded-card bg-cream px-5 py-6 sm:flex-col sm:gap-5 sm:p-7">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-paper text-terracotta-deep">
+              <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+            </span>
             <div>
-              <p className="text-[15px] font-medium text-ink">{title}</p>
-              <p className="mt-1 text-[14px] leading-relaxed text-muted">{text}</p>
+              <p className="font-display text-[24px] leading-tight text-ink">{title}</p>
+              <p className="mt-1.5 text-[14px] leading-relaxed text-muted">{text}</p>
             </div>
-          </li>
+          </RevealItem>
         ))}
-      </ul>
+      </RevealGroup>
     </section>
   );
 }

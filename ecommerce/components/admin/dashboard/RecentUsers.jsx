@@ -15,7 +15,7 @@ export default function RecentUsers({ users = [], loading = false }) {
       />
 
       {loading ? (
-        <div className={`${CARD_X} space-y-4 pb-5`}>
+        <div className={`${CARD_X} space-y-4 pb-4`}>
           {Array.from({ length: 4 }, (_, i) => (
             <div key={i} className="flex items-center gap-3">
               <Skeleton className="h-8 w-8 rounded-full" />

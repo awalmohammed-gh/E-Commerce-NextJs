@@ -6,15 +6,13 @@ export default async function AnnouncementBar() {
   const { deliveryFee } = await getStoreInfo();
 
   return (
-    <div className="bg-ink text-cream">
-      <p className="page-x py-2 text-center text-[12px] tracking-[0.04em]">
+    <div className="bg-espresso-deep text-paper/85">
+      <p className="page-x flex min-h-9 items-center justify-center py-2 text-center text-[11.5px] font-medium tracking-[0.12em] uppercase">
         {deliveryFee != null && (
           <>
             {deliveryFee > 0 ? `Flat ${formatCedis(deliveryFee)} delivery` : "Free delivery"} on every order
             <span className="hidden sm:inline">
-              <span className="mx-2 text-cream/40" aria-hidden="true">
-                /
-              </span>
+              <span className="mx-3 inline-block h-1 w-1 translate-y-[-2px] rounded-full bg-terracotta-light" aria-hidden="true" />
             </span>
           </>
         )}

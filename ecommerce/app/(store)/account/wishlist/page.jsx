@@ -16,7 +16,7 @@ const GRID = "grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 md:grid-cols-3 lg:gap
 function RemovedProductCard({ pending, onRemove }) {
   return (
     <div className="flex flex-col">
-      <div className="flex aspect-3/4 flex-col items-center justify-center gap-2 rounded-xs bg-sand px-4 text-center">
+      <div className="flex aspect-4/5 flex-col items-center justify-center gap-2 rounded-card bg-sand px-4 text-center">
         <PackageX className="h-6 w-6 text-taupe" strokeWidth={1.5} aria-hidden="true" />
         <p className="text-[13px] text-muted">No longer in the store</p>
       </div>

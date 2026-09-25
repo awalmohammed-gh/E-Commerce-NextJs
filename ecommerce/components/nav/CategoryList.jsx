@@ -25,7 +25,7 @@ function CategoryListView({ active, onNavigate, size }) {
               } ${isActive ? "font-medium text-ink" : "text-ink-soft hover:text-ink"}`}
             >
               <span className="flex items-center gap-2.5">
-                {isActive && <span className="h-1.5 w-1.5 rounded-full bg-rose" aria-hidden="true" />}
+                {isActive && <span className="h-1.5 w-1.5 rounded-full bg-terracotta" aria-hidden="true" />}
                 <span className={isActive ? "" : "decoration-ink/30 underline-offset-4 group-hover:underline"}>
                   {category.label}
                 </span>

@@ -17,21 +17,21 @@ export default function Toast({
   const styles = {
     success: {
       Icon: CheckCircle2,
-      icon: "text-[#3F6B4E]",
-      ring: "border-[#3F6B4E]/25",
-      bg: "bg-white",
+      icon: "text-success",
+      ring: "border-success/20",
+      bg: "bg-paper/92",
     },
     error: {
       Icon: AlertCircle,
-      icon: "text-[#B3413A]",
-      ring: "border-[#B3413A]/30",
-      bg: "bg-white",
+      icon: "text-danger",
+      ring: "border-danger/25",
+      bg: "bg-paper/92",
     },
     info: {
       Icon: AlertCircle,
       icon: "text-taupe",
-      ring: "border-[#1C1A17]/10",
-      bg: "bg-white",
+      ring: "border-line",
+      bg: "bg-paper/92",
     },
   };
 
@@ -52,7 +52,7 @@ export default function Toast({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className={`flex items-start gap-3 ${bg} border ${ring} rounded-sm shadow-[0_8px_24px_rgba(28,26,23,0.10)] p-4 w-full sm:w-96 max-w-full`}
+          className={`flex items-start gap-3 ${bg} border ${ring} rounded-card shadow-lift backdrop-blur-xl p-4 w-full sm:w-96 max-w-full`}
           role={type === "error" ? "alert" : "status"}
           aria-live={type === "error" ? "assertive" : "polite"}
         >

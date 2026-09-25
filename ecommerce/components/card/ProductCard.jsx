@@ -3,12 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { Check, Heart, Loader2, Plus, X } from "lucide-react";
 import { useEcommerce } from "@/context/EcommerceContextProvider";
 import ProductImage from "@/components/card/ProductImage";
 import { formatCedis } from "@/lib/formatCurrency";
+import { categoryLabel } from "@/lib/categories";
 import { DEFAULT_SIZE, getUnitPrice, hasDiscount } from "@/lib/pricing";
 import { useWishlistToggle } from "@/lib/useWishlistToggle";
+import { messageVariants } from "@/lib/storeMotion";
+import Bump from "@/components/motion/Bump";
 
 const LOW_STOCK = 5;
 
@@ -99,7 +103,7 @@ export default function ProductCard({
           type="button"
           onClick={() => addToBag(size)}
           disabled={Boolean(addingSize)}
-          className="flex h-9 min-w-9 items-center justify-center rounded-xs border border-line bg-white px-2 text-[13px] text-ink transition-colors hover:border-ink disabled:opacity-50"
+          className="flex h-9 min-w-9 items-center justify-center rounded-full border border-line bg-white px-2.5 text-[13px] font-medium text-ink transition-colors hover:border-ink hover:bg-ink hover:text-paper disabled:opacity-50"
         >
           {addingSize === size ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-label="Adding" /> : size}
         </button>
@@ -108,38 +112,41 @@ export default function ProductCard({
   );
 
   return (
-    <article className="group relative flex flex-col">
+    <article className="group relative flex flex-col transition-transform duration-500 ease-out-soft lg:hover:-translate-y-1">
       {/* Image */}
-      <div className="relative aspect-3/4 overflow-hidden rounded-xs bg-sand">
+      <div className="relative aspect-4/5 overflow-hidden rounded-card bg-sand transition-shadow duration-500 lg:group-hover:shadow-lift">
         <Link href={href} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
           <ProductImage
             src={images[0]}
             alt=""
             priority={priority}
             sizes="(max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
-            className={`object-cover transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.02] ${
+            className={`object-cover transition-[opacity,transform] duration-700 ease-out-soft group-hover:scale-[1.045] ${
               images[1] ? "group-hover:opacity-0" : ""
-            } ${soldOut ? "opacity-70" : ""}`}
+            } ${soldOut ? "opacity-70 grayscale-35" : ""}`}
           />
           {images[1] && (
             <ProductImage
               src={images[1]}
               alt=""
               sizes="(max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
-              className="object-cover opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100"
+              className="scale-[1.02] object-cover opacity-0 transition-[opacity,transform] duration-700 ease-out-soft group-hover:scale-100 group-hover:opacity-100"
             />
           )}
+          {/* Faint shade at the foot of the photo so the controls always read */}
+          <span
+            className="absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-espresso/18 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+            aria-hidden="true"
+          />
         </Link>
 
         {/* Status label */}
         {soldOut ? (
-          <span className="badge absolute top-2.5 left-2.5 bg-ink text-cream">{soldOutLabel}</span>
+          <span className="badge absolute top-3 left-3 bg-ink/85 text-paper backdrop-blur-md">{soldOutLabel}</span>
+        ) : onSale ? (
+          <span className="badge absolute top-3 left-3 bg-terracotta-deep text-white">{discount}% off</span>
         ) : (
-          onSale && (
-            <span className="badge absolute top-2.5 left-2.5 bg-paper text-rose-deep">
-              {discount}% off
-            </span>
-          )
+          product.newArrival && <span className="badge glass-light absolute top-3 left-3 shadow-none">New</span>
         )}
 
         {/* Wishlist */}
@@ -149,14 +156,16 @@ export default function ProductCard({
           disabled={wishlist.pending}
           aria-pressed={saved}
           aria-label={saved ? `Remove ${name} from wishlist` : `Save ${name} to wishlist`}
-          className={`absolute top-1.5 right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-paper/90 text-ink transition-opacity hover:bg-paper focus-visible:opacity-100 disabled:opacity-60 ${
+          className={`glass-light absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full shadow-none transition-[opacity,transform,background-color] duration-300 hover:scale-105 hover:bg-paper focus-visible:opacity-100 disabled:opacity-60 ${
             saved || showActions ? "opacity-100" : "opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100"
           }`}
         >
-          <Heart
-            className={`h-4.5 w-4.5 transition-colors ${saved ? "fill-rose-deep text-rose-deep" : ""}`}
-            strokeWidth={1.6}
-          />
+          <Bump value={saved} scale={1.15}>
+            <Heart
+              className={`h-4.5 w-4.5 transition-colors ${saved ? "fill-terracotta-deep text-terracotta-deep" : ""}`}
+              strokeWidth={1.6}
+            />
+          </Bump>
         </button>
 
         {/* Touch screens: add button on the photo, opposite the heart (44px target) */}
@@ -167,7 +176,7 @@ export default function ProductCard({
             disabled={Boolean(addingSize)}
             aria-expanded={hasSizes ? pickingSize : undefined}
             aria-label={hasSizes ? `Choose a size for ${name}` : `Add ${name} to bag`}
-            className="absolute right-1.5 bottom-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-paper/90 text-ink shadow-[0_2px_8px_rgba(28,26,23,0.10)] transition-colors active:bg-paper disabled:opacity-60 lg:hidden"
+            className="glass-light absolute right-2 bottom-2 flex h-10 w-10 items-center justify-center rounded-full transition-colors active:bg-paper disabled:opacity-60 lg:hidden"
           >
             {addingSize ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -181,11 +190,11 @@ export default function ProductCard({
 
         {/* Desktop quick add, revealed on hover or keyboard focus */}
         {!soldOut && (
-          <div className="absolute inset-x-2.5 bottom-2.5 hidden translate-y-2 opacity-0 transition-all duration-200 group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 lg:block">
+          <div className="absolute inset-x-3 bottom-3 hidden translate-y-3 opacity-0 transition-[opacity,transform] duration-300 ease-out-soft group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 lg:block">
             {pickingSize ? (
-              <div className="rounded-xs bg-paper p-2.5 shadow-[0_6px_18px_rgba(28,26,23,0.12)]">
+              <div className="glass-light rounded-card p-3">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-[12px] font-medium tracking-[0.08em] text-ink uppercase">Select size</span>
+                  <span className="text-[11px] font-semibold tracking-[0.14em] text-ink uppercase">Select size</span>
                   <button
                     type="button"
                     onClick={() => setPickingSize(false)}
@@ -202,9 +211,13 @@ export default function ProductCard({
                 type="button"
                 onClick={handleQuickAdd}
                 disabled={Boolean(addingSize)}
-                className="btn-light btn-sm w-full shadow-[0_6px_18px_rgba(28,26,23,0.12)]"
+                className="btn-sm glass-light flex w-full items-center justify-center gap-2 rounded-full text-[11.5px] font-semibold tracking-[0.12em] text-ink uppercase transition-colors hover:bg-paper disabled:opacity-60"
               >
-                {addingSize ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+                {addingSize ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Plus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+                )}
                 {addingSize ? "Adding" : hasSizes ? "Quick add" : "Add to bag"}
               </button>
             )}
@@ -213,15 +226,20 @@ export default function ProductCard({
       </div>
 
       {/* Details: full card width on every screen */}
-      <div className="flex min-w-0 flex-1 flex-col pt-2.5 sm:pt-3">
+      <div className="flex min-w-0 flex-1 flex-col pt-3 sm:pt-3.5">
+        {product.category && (
+          <p className="mb-1 truncate text-[10.5px] font-semibold tracking-[0.16em] text-muted uppercase">
+            {categoryLabel(product.category)}
+          </p>
+        )}
         {/* Two lines are always reserved so prices line up across a row */}
-        <h3 className="line-clamp-2 min-h-[2.75em] text-[13px] leading-snug wrap-break-word text-ink sm:text-[15px]">
-          <Link href={href} className="decoration-ink/30 underline-offset-4 hover:underline">
+        <h3 className="line-clamp-2 min-h-[2.75em] text-[13.5px] leading-snug wrap-break-word text-ink-soft sm:text-[15px]">
+          <Link href={href} className="decoration-terracotta/50 underline-offset-4 transition-colors hover:text-ink hover:underline">
             {name}
           </Link>
         </h3>
-        <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[14px] sm:text-[15px]">
-          <span className={onSale ? "font-medium text-rose-deep" : "font-medium text-ink"}>
+        <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[15px] sm:text-[16px]">
+          <span className={`font-semibold tabular-nums ${onSale ? "text-terracotta-deep" : "text-ink"}`}>
             {formatCedis(unitPrice)}
           </span>
           {onSale && (
@@ -243,17 +261,24 @@ export default function ProductCard({
           <p className="mt-1 text-[12px] text-warning">Only {stock} left</p>
         )}
 
-        {feedback && (
-          <p
-            role={feedback.type === "error" ? "alert" : "status"}
-            className={`mt-1.5 flex items-center gap-1.5 text-[12px] ${
-              feedback.type === "error" ? "text-danger" : "text-success"
-            }`}
-          >
-            {feedback.type === "success" && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
-            {feedback.message}
-          </p>
-        )}
+        <AnimatePresence>
+          {feedback && (
+            <motion.p
+              key={feedback.message}
+              variants={messageVariants}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+              role={feedback.type === "error" ? "alert" : "status"}
+              className={`mt-1.5 flex items-center gap-1.5 text-[12px] ${
+                feedback.type === "error" ? "text-danger" : "text-success"
+              }`}
+            >
+              {feedback.type === "success" && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
+              {feedback.message}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
     </article>
   );

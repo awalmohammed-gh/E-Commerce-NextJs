@@ -316,7 +316,7 @@ export default function AdminSettings() {
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-6">
         {/* Section list: scrolls sideways on phones, vertical from lg */}
-        <nav className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 lg:sticky lg:top-8" aria-label="Settings sections">
+        <nav className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 lg:sticky lg:top-22" aria-label="Settings sections">
           <ul className="flex min-w-max gap-1 lg:min-w-0 lg:flex-col">
             {TABS.map(({ key, label, icon: Icon }) => {
               const active = key === activeTab;

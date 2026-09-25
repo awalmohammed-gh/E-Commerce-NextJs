@@ -35,7 +35,7 @@ function OrdersSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Loading orders">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="panel p-5">
+        <div key={i} className="panel p-5 sm:p-6">
           <div className="flex justify-between">
             <div className="space-y-2">
               <div className="skeleton h-4 w-36" />
@@ -44,8 +44,8 @@ function OrdersSkeleton() {
             <div className="skeleton h-5 w-20" />
           </div>
           <div className="mt-5 flex gap-2">
-            <div className="skeleton h-20 w-15" />
-            <div className="skeleton h-20 w-15" />
+            <div className="skeleton h-20 w-15 rounded-field" />
+            <div className="skeleton h-20 w-15 rounded-field" />
           </div>
         </div>
       ))}
@@ -64,13 +64,23 @@ function Progress({ status }) {
             <span className="flex w-full items-center">
               <span
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] ${
-                  done ? "border-ink bg-ink text-cream" : "border-line bg-white text-muted"
+                  done ? "border-terracotta-deep bg-terracotta-deep text-white" : "border-line bg-white text-muted"
                 }`}
               >
                 {i < current ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" /> : i + 1}
               </span>
               {i < STEPS.length - 1 && (
-                <span className={`mx-2 h-px flex-1 ${i < current ? "bg-ink" : "bg-line"}`} aria-hidden="true" />
+                // Completed legs of the line draw in, one after the other
+                <span className="relative mx-2 h-px flex-1 overflow-hidden bg-line" aria-hidden="true">
+                  {i < current && (
+                    <motion.span
+                      className="absolute inset-0 origin-left bg-terracotta-deep"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.15 + i * 0.2 }}
+                    />
+                  )}
+                </span>
               )}
             </span>
             <span className={`text-[13px] ${done ? "text-ink" : "text-muted"}`}>
@@ -92,12 +102,12 @@ function OrderCard({ order }) {
   const detailsId = `order-${order._id}`;
 
   return (
-    <li className="panel">
+    <li className="panel overflow-hidden transition-shadow duration-300 hover:shadow-soft">
       <div className="p-5 sm:p-6">
         {/* Summary */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-[16px] font-medium text-ink">Order #{orderNumber(order._id)}</h2>
+            <h2 className="font-display text-[24px] leading-tight text-ink">Order #{orderNumber(order._id)}</h2>
             <p className="mt-0.5 text-[14px] text-muted">
               {formatDate(order.createdAt)} &middot; {itemCount} {itemCount === 1 ? "item" : "items"}
             </p>
@@ -111,19 +121,19 @@ function OrderCard({ order }) {
         <div className="mt-5 flex items-end justify-between gap-4">
           <ul className="flex gap-2 overflow-hidden" aria-label="Items">
             {lines.slice(0, 4).map((line) => (
-              <li key={`${line.productId}-${line.size}`} className="relative h-20 w-15 shrink-0 overflow-hidden rounded-xs bg-sand">
+              <li key={`${line.productId}-${line.size}`} className="relative h-20 w-15 shrink-0 overflow-hidden rounded-field bg-sand">
                 <ProductImage src={line.image} alt={line.name} sizes="60px" className="object-cover" />
               </li>
             ))}
             {lines.length > 4 && (
-              <li className="flex h-20 w-15 shrink-0 items-center justify-center rounded-xs bg-cream text-[13px] text-muted">
+              <li className="flex h-20 w-15 shrink-0 items-center justify-center rounded-field bg-cream text-[13px] text-muted">
                 +{lines.length - 4}
               </li>
             )}
           </ul>
           <div className="shrink-0 text-right">
             <p className="text-[13px] text-muted">Total</p>
-            <p className="text-lg font-medium text-ink">{formatCedis(order.totalAmount)}</p>
+            <p className="text-lg font-semibold text-ink tabular-nums">{formatCedis(order.totalAmount)}</p>
           </div>
         </div>
       </div>
@@ -151,7 +161,7 @@ function OrderCard({ order }) {
           >
             <div className="space-y-8 border-t border-line p-5 sm:p-6">
               {status === "Cancelled" ? (
-                <p className="rounded-[3px] bg-danger-tint px-4 py-3 text-[14px] text-danger">
+                <p className="alert-error">
                   This order was cancelled and won&apos;t be delivered.
                 </p>
               ) : (
@@ -164,7 +174,7 @@ function OrderCard({ order }) {
                 <ul className="divide-y divide-line">
                   {lines.map((line) => (
                     <li key={`${line.productId}-${line.size}`} className="flex items-center gap-4 py-3 first:pt-0">
-                      <span className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xs bg-sand">
+                      <span className="relative h-16 w-12 shrink-0 overflow-hidden rounded-field bg-sand">
                         <ProductImage src={line.image} alt="" sizes="48px" className="object-cover" />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -267,7 +277,7 @@ function MyOrders() {
       />
 
       {justPlaced && (
-        <p role="status" className="mb-6 flex items-start gap-3 rounded-[3px] bg-success-tint px-4 py-3.5 text-[15px] text-success">
+        <p role="status" className="mb-6 flex animate-rise items-start gap-3 rounded-field border border-success/15 bg-success-tint px-4 py-3.5 text-[15px] text-success">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
           Thank you, your order has been placed. You&apos;ll find it below.
         </p>

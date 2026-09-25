@@ -1,22 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import axios from "axios";
+import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import {
   ArrowUpRight,
   LayoutDashboard,
   LogOut,
-  Menu,
   PackagePlus,
   Package,
   Settings,
   ShoppingBag,
   Users,
 } from "lucide-react";
-import { Drawer } from "@/components/admin/ui/Dialog";
-import { useToast } from "@/components/admin/ui/Toast";
+import { DURATION, EASE_OUT, SIDEBAR_WIDTH } from "@/lib/adminMotion";
 
 /*
   Navigation for every admin page. Grouped by job; the same list drives
@@ -59,28 +56,79 @@ const isActiveLink = (pathname, link) =>
 export const currentNavLink = (pathname) =>
   ALL_LINKS.find((link) => isActiveLink(pathname, link));
 
-function Brand() {
+// Labels fade as the sidebar narrows; they stay in the DOM for screen readers
+const fade = { duration: DURATION.fast, ease: EASE_OUT };
+
+function Label({ collapsed, className = "", children }) {
   return (
-    <Link href="/admin" className="flex items-center gap-2 rounded-sm">
-      <span className="text-[17px] font-semibold tracking-[0.14em]">
-        <span className="text-ink">ELE</span>
-        <span className="text-rose">OKA</span>
+    <motion.span
+      initial={false}
+      animate={{ opacity: collapsed ? 0 : 1 }}
+      transition={fade}
+      className={`min-w-0 truncate ${className}`}
+    >
+      {children}
+    </motion.span>
+  );
+}
+
+// "Eleoka Admin" wordmark next to the monogram (the wordmark fades when collapsed)
+export function Brand({ collapsed = false }) {
+  return (
+    <Link href="/admin" className="flex items-center gap-2.5 rounded-lg" aria-label="Eleoka Admin, overview">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink text-[15px] font-bold text-paper"
+        aria-hidden="true"
+      >
+        E
       </span>
-      <span className="rounded border border-line px-1.5 py-px text-[10px] font-medium tracking-[0.08em] text-muted uppercase">
-        Admin
-      </span>
+      <motion.span
+        initial={false}
+        animate={{ opacity: collapsed ? 0 : 1 }}
+        transition={fade}
+        className="flex items-baseline gap-1.5 whitespace-nowrap"
+        aria-hidden="true"
+      >
+        <span className="text-[15px] font-bold tracking-[0.16em]">
+          <span className="text-ink">ELE</span>
+          <span className="text-terracotta">OKA</span>
+        </span>
+        <span className="text-[11px] font-semibold tracking-[0.14em] text-muted uppercase">Admin</span>
+      </motion.span>
     </Link>
   );
 }
 
-function NavList({ pathname, onNavigate }) {
+/*
+  One row: icon + label. Geometry is the same collapsed or not
+  (12px nav padding + 12px row padding + 18px icon), so at the
+  collapsed width of 66px the icon is already centred and nothing
+  jumps - only the label fades and the panel narrows.
+*/
+const ROW =
+  "relative flex h-10 items-center gap-3 rounded-xl px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200";
+
+export function NavList({ pathname, onNavigate, collapsed = false }) {
   return (
-    <nav aria-label="Admin" className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+    <nav aria-label="Admin" className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-2.5">
       {NAV_SECTIONS.map((section) => (
-        <div key={section.label} className="mb-5 last:mb-0">
-          <p className="px-2.5 pb-1.5 text-[11px] font-medium tracking-[0.08em] text-muted uppercase">
-            {section.label}
-          </p>
+        <div key={section.label} className="mb-3 last:mb-0">
+          {/* Section name, swapped for a short rule while collapsed */}
+          <div className="relative h-6">
+            <Label
+              collapsed={collapsed}
+              className="block px-3 text-[10.5px] font-semibold tracking-[0.16em] text-muted uppercase"
+            >
+              {section.label}
+            </Label>
+            <motion.span
+              initial={false}
+              animate={{ opacity: collapsed ? 1 : 0 }}
+              transition={fade}
+              className="absolute top-2 left-3 h-px w-[18px] bg-ink/15"
+              aria-hidden="true"
+            />
+          </div>
           <ul className="space-y-0.5">
             {section.links.map((link) => {
               const { name, path, icon: Icon } = link;
@@ -92,21 +140,19 @@ function NavList({ pathname, onNavigate }) {
                     href={path}
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
-                    className={`relative flex h-10 items-center gap-3 rounded-md px-2.5 text-sm transition-colors sm:h-9 ${
+                    title={collapsed ? name : undefined}
+                    className={`${ROW} ${
                       active
-                        ? "bg-ink/6 font-medium text-ink"
-                        : "text-ink-soft hover:bg-ink/4 hover:text-ink"
+                        ? "bg-terracotta-deep font-semibold text-white shadow-accent-glow"
+                        : "text-ink-soft hover:bg-white/70 hover:text-ink"
                     }`}
                   >
-                    {/* Active marker: a short rose bar on the left edge */}
-                    {active && (
-                      <span className="absolute top-2 bottom-2 -left-3 w-0.75 rounded-r bg-rose" aria-hidden="true" />
-                    )}
                     <Icon
-                      className={`h-4 w-4 shrink-0 ${active ? "text-ink" : "text-muted"}`}
+                      className={`h-[18px] w-[18px] shrink-0 ${active ? "text-white" : "text-taupe"}`}
+                      strokeWidth={1.8}
                       aria-hidden="true"
                     />
-                    {name}
+                    <Label collapsed={collapsed}>{name}</Label>
                   </Link>
                 </li>
               );
@@ -118,132 +164,58 @@ function NavList({ pathname, onNavigate }) {
   );
 }
 
-function AccountFooter({ onSignOut, signingOut }) {
+export function AccountFooter({ onSignOut, signingOut, collapsed = false }) {
   return (
-    <div className="border-t border-line p-3">
+    <div className="space-y-0.5 border-t border-ink/8 p-3">
       <Link
         href="/"
         target="_blank"
         rel="noopener noreferrer"
-        className="mb-1 flex h-10 items-center gap-3 rounded-md px-2.5 text-sm text-ink-soft transition-colors hover:bg-ink/4 hover:text-ink sm:h-9"
+        title={collapsed ? "View storefront" : undefined}
+        className={`${ROW} text-ink-soft hover:bg-white/70 hover:text-ink`}
       >
-        <ArrowUpRight className="h-4 w-4 text-muted" aria-hidden="true" />
-        View storefront
+        <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-taupe" strokeWidth={1.8} aria-hidden="true" />
+        <Label collapsed={collapsed}>View storefront</Label>
         <span className="sr-only">(opens in a new tab)</span>
       </Link>
 
-      <div className="mt-2 border-t border-line pt-3">
-        <div className="flex items-center gap-3 px-2.5">
-          <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-semibold text-white"
-            aria-hidden="true"
-          >
-            A
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-medium text-ink">Administrator</p>
-            <p className="truncate text-xs text-muted">Signed in</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onSignOut}
-          disabled={signingOut}
-          className="mt-2 flex h-10 w-full items-center gap-3 rounded-md px-2.5 text-sm text-ink-soft transition-colors hover:bg-danger-tint hover:text-danger disabled:opacity-50 sm:h-9"
-        >
-          <LogOut className="h-4 w-4" aria-hidden="true" />
-          {signingOut ? "Signing out..." : "Sign out"}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={onSignOut}
+        disabled={signingOut}
+        title={collapsed ? "Sign out" : undefined}
+        className={`${ROW} w-full text-ink-soft hover:bg-danger-tint hover:text-danger disabled:opacity-50`}
+      >
+        <LogOut className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
+        <Label collapsed={collapsed}>{signingOut ? "Signing out..." : "Sign out"}</Label>
+      </button>
     </div>
   );
 }
 
 /*
-  Desktop: fixed-width sidebar pinned to the viewport; the layout
-  offsets the main content by its width (lg:pl-60).
-  Below lg: a top bar with a menu button that opens the same
-  navigation in a drawer.
+  Desktop sidebar (lg and up): a floating glass panel pinned to the
+  viewport. Its width animates between SIDEBAR_WIDTH.expanded and
+  .collapsed; AdminShell offsets the content by the same values.
+  Below lg the same NavList opens in a drawer.
 */
-export default function AdminSidebar() {
+export default function AdminSidebar({ collapsed, onSignOut, signingOut }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const toast = useToast();
-
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
-
-  const current = currentNavLink(pathname);
-
-  // Clears the httpOnly adminToken cookie on the server, then leaves
-  const handleSignOut = async () => {
-    try {
-      setSigningOut(true);
-      await axios.post("/api/auth/admin/logout");
-      setMobileOpen(false);
-      router.replace("/admin/admin-login");
-      router.refresh();
-    } catch (error) {
-      console.error(error);
-      toast.error("Couldn't sign you out. Please try again.");
-      setSigningOut(false);
-    }
-  };
-
-  const panel = (onNavigate) => (
-    <>
-      <NavList pathname={pathname} onNavigate={onNavigate} />
-      <AccountFooter onSignOut={handleSignOut} signingOut={signingOut} />
-    </>
-  );
 
   return (
-    <>
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-line bg-white lg:flex">
-        <div className="flex h-14 items-center border-b border-line px-5">
-          <Brand />
-        </div>
-        {panel()}
-      </aside>
-
-      {/* Top bar below lg */}
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-white/95 px-2 backdrop-blur-sm sm:px-4 lg:hidden">
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-md text-ink transition-colors hover:bg-ink/5"
-          aria-label="Open navigation"
-          aria-expanded={mobileOpen}
-        >
-          <Menu className="h-5 w-5" aria-hidden="true" />
-        </button>
-        <Brand />
-        {current && (
-          <p className="ml-auto truncate pr-2 text-[13px] text-muted">
-            {current.name}
-          </p>
-        )}
-      </header>
-
-      <Drawer
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        side="left"
-        width="max-w-[85vw] sm:max-w-[280px]"
-        hideHeader
-        labelledBy="admin-mobile-nav-title"
-      >
-        <div className="flex h-full flex-col">
-          <div className="flex h-14 items-center border-b border-line px-5">
-            <h2 id="admin-mobile-nav-title" className="sr-only">
-              Navigation
-            </h2>
-            <Brand />
-          </div>
-          {panel(() => setMobileOpen(false))}
-        </div>
-      </Drawer>
-    </>
+    <motion.aside
+      initial={false}
+      animate={{ width: collapsed ? SIDEBAR_WIDTH.collapsed : SIDEBAR_WIDTH.expanded }}
+      transition={{ duration: DURATION.slow, ease: EASE_OUT }}
+      style={{ width: collapsed ? SIDEBAR_WIDTH.collapsed : SIDEBAR_WIDTH.expanded }}
+      className="admin-glass fixed top-3 bottom-3 left-3 z-20 hidden flex-col overflow-hidden lg:flex"
+      aria-label="Sidebar"
+    >
+      <div className="flex h-14 shrink-0 items-center border-b border-ink/8 px-[15px]">
+        <Brand collapsed={collapsed} />
+      </div>
+      <NavList pathname={pathname} collapsed={collapsed} />
+      <AccountFooter onSignOut={onSignOut} signingOut={signingOut} collapsed={collapsed} />
+    </motion.aside>
   );
 }

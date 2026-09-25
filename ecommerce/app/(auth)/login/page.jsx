@@ -78,7 +78,7 @@ export default function LoginPage() {
     >
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         {formError && (
-          <p role="alert" className="flex items-start gap-2.5 rounded-[3px] bg-danger-tint px-4 py-3 text-[14px] text-danger">
+          <p role="alert" className="alert-error">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             {formError}
           </p>

@@ -568,7 +568,7 @@ export default function ProductForm({ mode = "create", product = null, onSubmit,
         </div>
 
         {/* ================= Side column ================= */}
-        <div className="min-w-0 space-y-4 lg:sticky lg:top-8 lg:space-y-5">
+        <div className="min-w-0 space-y-4 lg:sticky lg:top-22 lg:space-y-5">
           {aside}
 
           <Card aria-labelledby="visibility-title">

@@ -25,7 +25,7 @@ export function Avatar({ user, size = "md" }) {
 
   return (
     <span
-      className={`${box} flex shrink-0 items-center justify-center rounded-full bg-ink font-medium text-cream`}
+      className={`${box} flex shrink-0 items-center justify-center rounded-full bg-terracotta-deep font-semibold text-white`}
       aria-hidden="true"
     >
       {initial || <User className="h-4 w-4" strokeWidth={1.75} />}
@@ -111,8 +111,8 @@ export default function AccountMenu({
       onKeyDown={handleKeyDown}
       className={
         isDropdown
-          ? "w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-sm border border-line bg-white py-1 shadow-[0_12px_32px_rgba(28,26,23,0.12)]"
-          : "overflow-hidden rounded-sm border border-line bg-white py-1"
+          ? "w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-card border border-line/80 bg-paper/95 py-1 shadow-lift backdrop-blur-xl"
+          : "overflow-hidden rounded-card border border-line bg-white py-1"
       }
     >
       {/* Profile header (signed-in only - no private data for guests) */}

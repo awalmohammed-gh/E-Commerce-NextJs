@@ -86,7 +86,7 @@ export default function GeneralSettings({
       description="Your business details, shown to customers and on receipts."
       {...cardProps}
     >
-      <div className="space-y-5">
+      <div className="space-y-4">
         <LogoField
           logo={values.logo}
           uploading={uploadingLogo}
@@ -95,7 +95,7 @@ export default function GeneralSettings({
           onInvalid={onLogoError}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TextField
             id="general-systemName"
             label="Business name"

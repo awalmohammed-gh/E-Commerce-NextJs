@@ -21,7 +21,7 @@ export default function RecentOrders({ orders = [], loading = false }) {
       />
 
       {loading ? (
-        <div className={`${CARD_X} space-y-3 pb-5`}>
+        <div className={`${CARD_X} space-y-3 pb-4`}>
           {Array.from({ length: 5 }, (_, i) => (
             <Skeleton key={i} className="h-9 w-full" />
           ))}

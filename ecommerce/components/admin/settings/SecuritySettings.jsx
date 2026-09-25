@@ -79,11 +79,11 @@ function ChangePasswordCard({ onSuccess, onError, onUnauthorized }) {
       title="Change Password"
       description="Changing your password signs you out on every other device."
     >
-      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {/* Helps password managers pair the new password with the account */}
         <input type="hidden" name="username" autoComplete="username" />
 
-        <div className="max-w-md space-y-5">
+        <div className="max-w-md space-y-4">
           <TextField
             id="security-currentPassword"
             label="Current password"
@@ -153,7 +153,7 @@ export default function SecuritySettings({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Account */}
       <SettingsCard
         title="Admin Account"
@@ -202,7 +202,7 @@ export default function SecuritySettings({
         description="How long admin sign-ins last, and signing out other devices."
         {...cardProps}
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="max-w-xs">
             <NumberField
               id="security-sessionDurationHours"
@@ -218,7 +218,7 @@ export default function SecuritySettings({
             />
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
             <div className="min-w-0">
               <p className="text-sm font-medium text-ink">Sign out all other sessions</p>
               <p className="mt-0.5 text-[13px] text-muted">Ends every admin sign-in except this one.</p>

@@ -4,7 +4,8 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ExternalLink, Package, PackagePlus, Pencil, RefreshCw, SearchX, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Eye, Package, PackagePlus, Pencil, RefreshCw, SearchX, Trash2 } from "lucide-react";
 import { formatCedis } from "@/lib/formatCurrency";
 import { formatDate } from "@/lib/formatDate";
 import { stockLevel } from "@/lib/orderStatus";
@@ -16,6 +17,8 @@ import SearchInput from "@/components/admin/ui/SearchInput";
 import { Select } from "@/components/admin/ui/Field";
 import { TABLE, TD, TH, TR } from "@/components/admin/ui/Table";
 import { ConfirmDialog } from "@/components/admin/ui/Dialog";
+import ProductDetailsModal from "@/components/admin/products/ProductDetailsModal";
+import { rowVariants } from "@/lib/adminMotion";
 import { useToast } from "@/components/admin/ui/Toast";
 import { EmptyState, ErrorState, InlineAlert, Skeleton, friendlyError } from "@/components/admin/ui/States";
 
@@ -41,7 +44,7 @@ const productId = (p) => p._id || p.id;
 /* ------------------------------------------------------------------
    Small pieces
 ------------------------------------------------------------------ */
-function Thumb({ product, size = "h-12 w-10" }) {
+function Thumb({ product, size = "h-11 w-9" }) {
   return (
     <div className={`relative shrink-0 overflow-hidden rounded border border-line bg-paper ${size}`}>
       {product.images?.[0] ? (
@@ -88,7 +91,7 @@ function Flags({ product }) {
   );
 }
 
-function RowActions({ product, deleting, onDelete }) {
+function RowActions({ product, deleting, onView, onDelete }) {
   const id = productId(product);
   return (
     <div className="flex items-center justify-end gap-1">
@@ -98,11 +101,10 @@ function RowActions({ product, deleting, onDelete }) {
       <Button
         variant="ghost"
         size="sm"
-        icon={ExternalLink}
-        href={`/product/${id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`View ${product.name} in the store (opens in a new tab)`}
+        icon={Eye}
+        onClick={() => onView(product)}
+        aria-haspopup="dialog"
+        aria-label={`View details of ${product.name}`}
       >
         View
       </Button>
@@ -162,6 +164,8 @@ function ProductList() {
   });
 
   const [pendingDelete, setPendingDelete] = useState(null);
+  // Product shown in the details modal
+  const [viewing, setViewing] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
   /* Fetch */
@@ -326,32 +330,42 @@ function ProductList() {
       <Card className="overflow-hidden">
         {/* Phones: cards */}
         <ul className="divide-y divide-line md:hidden">
-          {filtered.map((product) => {
-            const id = productId(product);
-            return (
-              <li key={id} className={`p-4 ${deletingId === id ? "opacity-50" : ""}`}>
-                <div className="flex gap-3">
-                  <Thumb product={product} size="h-16 w-14" />
-                  <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-sm font-medium text-ink">{product.name}</p>
-                    <p className="mt-0.5 truncate text-xs text-muted">
-                      {[product.category, product.subCategory].filter(Boolean).join(" · ") || "Uncategorised"}
-                    </p>
-                    <div className="mt-1.5 text-sm">
-                      <Price product={product} />
+          <AnimatePresence>
+            {filtered.map((product, index) => {
+              const id = productId(product);
+              return (
+                <motion.li
+                  key={id}
+                  variants={rowVariants}
+                  custom={index}
+                  initial="hidden"
+                  animate={deletingId === id ? { opacity: 0.5 } : "show"}
+                  exit="exit"
+                  className="p-4"
+                >
+                  <div className="flex gap-3">
+                    <Thumb product={product} size="h-16 w-14" />
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-sm font-medium text-ink">{product.name}</p>
+                      <p className="mt-0.5 truncate text-xs text-muted">
+                        {[product.category, product.subCategory].filter(Boolean).join(" · ") || "Uncategorised"}
+                      </p>
+                      <div className="mt-1.5 text-sm">
+                        <Price product={product} />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-1">
-                    <StockBadge stock={product.stock} />
-                    <Flags product={product} />
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1">
+                      <StockBadge stock={product.stock} />
+                      <Flags product={product} />
+                    </div>
+                    <RowActions product={product} deleting={deletingId === id} onView={setViewing} onDelete={setPendingDelete} />
                   </div>
-                  <RowActions product={product} deleting={deletingId === id} onDelete={setPendingDelete} />
-                </div>
-              </li>
-            );
-          })}
+                </motion.li>
+              );
+            })}
+          </AnimatePresence>
         </ul>
 
         {/* md and up: table */}
@@ -370,38 +384,48 @@ function ProductList() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((product) => {
-                const id = productId(product);
-                return (
-                  <tr key={id} className={`${TR} ${deletingId === id ? "opacity-50" : ""}`}>
-                    <td className={TD}>
-                      <div className="flex min-w-55 items-center gap-3">
-                        <Thumb product={product} />
-                        <div className="min-w-0">
-                          <p className="line-clamp-2 font-medium text-ink">{product.name}</p>
-                          <Flags product={product} />
+              <AnimatePresence>
+                {filtered.map((product, index) => {
+                  const id = productId(product);
+                  return (
+                    <motion.tr
+                      key={id}
+                      variants={rowVariants}
+                      custom={index}
+                      initial="hidden"
+                      animate={deletingId === id ? { opacity: 0.5 } : "show"}
+                      exit="exit"
+                      className={TR}
+                    >
+                      <td className={TD}>
+                        <div className="flex min-w-55 items-center gap-3">
+                          <Thumb product={product} />
+                          <div className="min-w-0">
+                            <p className="line-clamp-2 font-medium text-ink">{product.name}</p>
+                            <Flags product={product} />
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className={`${TD} text-ink-soft`}>
-                      <p className="whitespace-nowrap">{product.category || "—"}</p>
-                      {product.subCategory && <p className="text-xs whitespace-nowrap text-muted">{product.subCategory}</p>}
-                    </td>
-                    <td className={`${TD} whitespace-nowrap`}>
-                      <Price product={product} />
-                    </td>
-                    <td className={TD}>
-                      <StockBadge stock={product.stock} />
-                    </td>
-                    <td className={`${TD} hidden whitespace-nowrap text-ink-soft xl:table-cell`}>
-                      {formatDate(product.createdAt)}
-                    </td>
-                    <td className={TD}>
-                      <RowActions product={product} deleting={deletingId === id} onDelete={setPendingDelete} />
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                      <td className={`${TD} text-ink-soft`}>
+                        <p className="whitespace-nowrap">{product.category || "—"}</p>
+                        {product.subCategory && <p className="text-xs whitespace-nowrap text-muted">{product.subCategory}</p>}
+                      </td>
+                      <td className={`${TD} whitespace-nowrap`}>
+                        <Price product={product} />
+                      </td>
+                      <td className={TD}>
+                        <StockBadge stock={product.stock} />
+                      </td>
+                      <td className={`${TD} hidden whitespace-nowrap text-ink-soft xl:table-cell`}>
+                        {formatDate(product.createdAt)}
+                      </td>
+                      <td className={TD}>
+                        <RowActions product={product} deleting={deletingId === id} onView={setViewing} onDelete={setPendingDelete} />
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>
@@ -467,6 +491,15 @@ function ProductList() {
       )}
 
       {content}
+
+      <ProductDetailsModal
+        product={viewing}
+        onClose={() => setViewing(null)}
+        onDelete={(product) => {
+          setViewing(null);
+          setPendingDelete(product);
+        }}
+      />
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}

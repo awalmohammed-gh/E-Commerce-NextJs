@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductImage from "@/components/card/ProductImage";
 
 /*
-  Product photos from MongoDB/Cloudinary, all at the same 3:4 ratio.
+  Product photos from MongoDB/Cloudinary, all at the same 4:5 ratio.
   Phones: a swipeable strip (native scroll-snap) with position dots.
   md and up: one large image with thumbnails beside it and arrows.
 */
@@ -36,7 +37,7 @@ export default function ProductGallery({ images = [], name, badge }) {
           aria-label={`${name} photos`}
         >
           {(photos.length ? photos : [null]).map((src, i) => (
-            <div key={src || i} className="relative aspect-3/4 w-full shrink-0 snap-center bg-sand">
+            <div key={src || i} className="relative aspect-4/5 w-full shrink-0 snap-center bg-sand">
               <ProductImage
                 src={src}
                 alt={photos.length > 1 ? `${name}, photo ${i + 1} of ${photos.length}` : name}
@@ -49,11 +50,11 @@ export default function ProductGallery({ images = [], name, badge }) {
         </div>
         {badge && <div className="absolute top-3 left-4">{badge}</div>}
         {photos.length > 1 && (
-          <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5" aria-hidden="true">
+          <div className="glass-light absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3 py-2 shadow-none" aria-hidden="true">
             {photos.map((src, i) => (
               <span
                 key={src}
-                className={`h-1.5 rounded-full transition-all ${i === active ? "w-5 bg-ink" : "w-1.5 bg-ink/30"}`}
+                className={`h-1.5 rounded-full transition-all ${i === active ? "w-5 bg-terracotta-deep" : "w-1.5 bg-ink/25"}`}
               />
             ))}
           </div>
@@ -63,7 +64,7 @@ export default function ProductGallery({ images = [], name, badge }) {
       {/* md+: main image with thumbnails */}
       <div className="hidden gap-4 md:flex">
         {photos.length > 1 && (
-          <ul className="flex w-18 shrink-0 flex-col gap-3" aria-label="Choose a photo">
+          <ul className="flex w-20 shrink-0 flex-col gap-3" aria-label="Choose a photo">
             {photos.map((src, i) => (
               <li key={src}>
                 <button
@@ -71,8 +72,8 @@ export default function ProductGallery({ images = [], name, badge }) {
                   onClick={() => setActive(i)}
                   aria-label={`Show photo ${i + 1}`}
                   aria-current={i === active ? "true" : undefined}
-                  className={`relative block aspect-3/4 w-full overflow-hidden rounded-xs bg-sand transition-opacity ${
-                    i === active ? "ring-1 ring-ink ring-offset-2 ring-offset-paper" : "opacity-70 hover:opacity-100"
+                  className={`relative block aspect-4/5 w-full overflow-hidden rounded-field bg-sand transition-opacity duration-300 ${
+                    i === active ? "ring-1 ring-ink ring-offset-2 ring-offset-paper" : "opacity-60 hover:opacity-100"
                   }`}
                 >
                   <ProductImage src={src} alt="" sizes="72px" className="object-cover" />
@@ -82,22 +83,38 @@ export default function ProductGallery({ images = [], name, badge }) {
           </ul>
         )}
 
-        <div className="group relative aspect-3/4 flex-1 overflow-hidden rounded-xs bg-sand">
-          <ProductImage
-            key={photos[active] || "none"}
-            src={photos[active]}
-            alt={name}
-            priority
-            sizes="(max-width: 1023px) 55vw, 45vw"
-            className="object-cover"
-          />
+        <div className="group relative aspect-4/5 flex-1 overflow-hidden rounded-card bg-sand">
+          {/* Crossfade between photos; the first one shows without a fade */}
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={photos[active] || "none"}
+              className="absolute inset-0"
+              initial={{ opacity: 0, scale: 1.015 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <ProductImage
+                src={photos[active]}
+                alt={name}
+                priority
+                sizes="(max-width: 1023px) 55vw, 45vw"
+                className="object-cover"
+              />
+            </motion.div>
+          </AnimatePresence>
           {badge && <div className="absolute top-4 left-4">{badge}</div>}
+          {photos.length > 1 && (
+            <span className="glass-light absolute right-4 bottom-4 rounded-full px-3 py-1 text-[11px] font-semibold tracking-[0.14em] tabular-nums shadow-none">
+              {String(active + 1).padStart(2, "0")} / {String(photos.length).padStart(2, "0")}
+            </span>
+          )}
           {photos.length > 1 && (
             <>
               <button
                 type="button"
                 onClick={() => go(active - 1)}
-                className="absolute top-1/2 left-3 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/90 text-ink opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                className="glass-light absolute top-1/2 left-4 flex h-11 w-11 -translate-x-2 -translate-y-1/2 items-center justify-center rounded-full opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100 hover:bg-paper focus-visible:translate-x-0 focus-visible:opacity-100"
                 aria-label="Previous photo"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -105,7 +122,7 @@ export default function ProductGallery({ images = [], name, badge }) {
               <button
                 type="button"
                 onClick={() => go(active + 1)}
-                className="absolute top-1/2 right-3 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/90 text-ink opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                className="glass-light absolute top-1/2 right-4 flex h-11 w-11 translate-x-2 -translate-y-1/2 items-center justify-center rounded-full opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100 hover:bg-paper focus-visible:translate-x-0 focus-visible:opacity-100"
                 aria-label="Next photo"
               >
                 <ChevronRight className="h-5 w-5" />

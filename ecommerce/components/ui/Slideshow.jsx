@@ -26,18 +26,19 @@ const usePageVisible = () =>
   useSyncExternalStore(subscribeVisibility, () => document.visibilityState === "visible", () => true);
 
 /* ------------------------------------------------------------------
-   Controls: pause/play, previous, position dots, next
+   Controls: a small frosted pill with pause/play, previous,
+   progress bars and next. tone="light" sits over dark imagery.
 ------------------------------------------------------------------ */
 function Controls({ count, active, playing, canAutoplay, showPauseButton, interval, tone, onGo, onToggle, labelId }) {
   const light = tone === "light";
-  const button = `flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-    light ? "text-cream hover:bg-cream/15" : "text-ink hover:bg-ink/5"
+  const button = `flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 ${
+    light ? "text-paper hover:bg-white/15" : "text-ink hover:bg-ink/6"
   }`;
-  const track = light ? "bg-cream/35" : "bg-ink/15";
-  const fill = light ? "bg-cream" : "bg-ink";
+  const track = light ? "bg-white/30" : "bg-ink/15";
+  const fill = light ? "bg-paper" : "bg-terracotta-deep";
 
   return (
-    <div className="flex items-center gap-1">
+    <div className={`flex items-center gap-0.5 rounded-full p-1 ${light ? "glass-dark" : "glass-light"}`}>
       {canAutoplay && showPauseButton && (
         <button
           type="button"
@@ -50,7 +51,7 @@ function Controls({ count, active, playing, canAutoplay, showPauseButton, interv
       )}
 
       <button type="button" onClick={() => onGo(active - 1)} className={button} aria-label="Previous slide" aria-controls={labelId}>
-        <ChevronLeft className="h-5 w-5" strokeWidth={1.6} />
+        <ChevronLeft className="h-4.5 w-4.5" strokeWidth={1.6} />
       </button>
 
       <div className="flex items-center" role="group" aria-label="Choose a slide">
@@ -62,9 +63,9 @@ function Controls({ count, active, playing, canAutoplay, showPauseButton, interv
             aria-label={`Show slide ${i + 1} of ${count}`}
             aria-current={i === active ? "true" : undefined}
             aria-controls={labelId}
-            className="flex h-10 items-center px-1.5"
+            className="flex h-9 items-center px-1"
           >
-            <span className={`relative block h-0.5 overflow-hidden rounded-full transition-[width] duration-300 ${track} ${i === active ? "w-10" : "w-5"}`}>
+            <span className={`relative block h-0.5 overflow-hidden rounded-full transition-[width] duration-500 ease-out-soft ${track} ${i === active ? "w-9" : "w-3.5"}`}>
               {i === active && (
                 <span
                   // Visual timer: fills over `interval` and freezes whenever auto-play
@@ -84,7 +85,7 @@ function Controls({ count, active, playing, canAutoplay, showPauseButton, interv
       </div>
 
       <button type="button" onClick={() => onGo(active + 1)} className={button} aria-label="Next slide" aria-controls={labelId}>
-        <ChevronRight className="h-5 w-5" strokeWidth={1.6} />
+        <ChevronRight className="h-4.5 w-4.5" strokeWidth={1.6} />
       </button>
     </div>
   );

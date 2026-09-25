@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 import { ChevronRight, RefreshCw, SearchX, ShoppingBag } from "lucide-react";
 import { isUnauthorized } from "@/lib/adminDashboardApi";
@@ -17,8 +18,9 @@ import { Select } from "@/components/admin/ui/Field";
 import { TABLE, TD, TH, TR } from "@/components/admin/ui/Table";
 import { ConfirmDialog } from "@/components/admin/ui/Dialog";
 import { useToast } from "@/components/admin/ui/Toast";
+import { rowVariants } from "@/lib/adminMotion";
 import { EmptyState, ErrorState, InlineAlert, Skeleton, friendlyError } from "@/components/admin/ui/States";
-import OrderDrawer from "@/components/admin/orders/OrderDrawer";
+import OrderDetailsModal from "@/components/admin/orders/OrderDetailsModal";
 import { customerOf, itemCount, orderLines, orderTotal, shortOrderId } from "@/components/admin/orders/orderUtils";
 
 const STATUS_TABS = ["all", ...ORDER_STATUSES];
@@ -62,7 +64,7 @@ function Orders() {
   // Product names/prices for older orders without a line-item snapshot
   const [products, setProducts] = useState([]);
 
-  // Order shown in the details drawer (opened from ?order=<id> too)
+  // Order shown in the details modal (opened from ?order=<id> too)
   const [selectedId, setSelectedId] = useState(() => searchParams.get("order"));
   const [updating, setUpdating] = useState(null); // "status" | "payment" | null
 
@@ -271,32 +273,34 @@ function Orders() {
       <Card className="overflow-hidden">
         {/* Phones: one card per order, whole card opens the details */}
         <ul className="divide-y divide-line md:hidden">
-          {filtered.map(({ order, status, customer, items, total }) => (
-            <li key={order._id}>
-              <button
-                type="button"
-                onClick={() => setSelectedId(order._id)}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-ink/2"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="truncate text-sm font-medium text-ink">{customer.name || "Guest"}</p>
-                    <p className="shrink-0 text-sm font-medium text-ink tabular-nums">{formatCedis(total)}</p>
+          <AnimatePresence>
+            {filtered.map(({ order, status, customer, items, total }, index) => (
+              <motion.li key={order._id} variants={rowVariants} custom={index} initial="hidden" animate="show" exit="exit">
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(order._id)}
+                  className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-ink/2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="truncate text-sm font-medium text-ink">{customer.name || "Guest"}</p>
+                      <p className="shrink-0 text-sm font-medium text-ink tabular-nums">{formatCedis(total)}</p>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted">
+                      <span className="font-mono">{shortOrderId(order._id)}</span> · {formatDate(order.createdAt)} ·{" "}
+                      {items} {items === 1 ? "item" : "items"}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <OrderStatusBadge status={status} />
+                      <PaymentBadge paid={Boolean(order.payment)} />
+                    </div>
                   </div>
-                  <p className="mt-0.5 text-xs text-muted">
-                    <span className="font-mono">{shortOrderId(order._id)}</span> · {formatDate(order.createdAt)} ·{" "}
-                    {items} {items === 1 ? "item" : "items"}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <OrderStatusBadge status={status} />
-                    <PaymentBadge paid={Boolean(order.payment)} />
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
-                <span className="sr-only">View order details</span>
-              </button>
-            </li>
-          ))}
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                  <span className="sr-only">View order details</span>
+                </button>
+              </motion.li>
+            ))}
+          </AnimatePresence>
         </ul>
 
         {/* md and up: table; clicking a row opens the details */}
@@ -316,52 +320,59 @@ function Orders() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(({ order, status, customer, items, total }) => (
-                <tr
-                  key={order._id}
-                  onClick={() => setSelectedId(order._id)}
-                  className={`${TR} cursor-pointer ${selectedId === order._id ? "bg-ink/3" : ""}`}
-                >
-                  <td className={TD}>
-                    <p className="font-mono text-[13px] font-medium text-ink">{shortOrderId(order._id)}</p>
-                    <p className="text-xs text-muted">
-                      {items} {items === 1 ? "item" : "items"}
-                      <span className="lg:hidden"> · {formatDate(order.createdAt)}</span>
-                    </p>
-                  </td>
-                  <td className={`${TD} max-w-55`}>
-                    <p className="truncate text-ink">{customer.name || "Guest"}</p>
-                    {customer.phone && <p className="truncate text-xs text-muted">{customer.phone}</p>}
-                  </td>
-                  <td className={`${TD} hidden whitespace-nowrap text-ink-soft lg:table-cell`}>
-                    {formatDate(order.createdAt)}
-                  </td>
-                  <td className={TD}>
-                    <PaymentBadge paid={Boolean(order.payment)} />
-                    <p className="mt-1 text-xs whitespace-nowrap text-muted">{order.paymentMethod || "—"}</p>
-                  </td>
-                  <td className={TD}>
-                    <OrderStatusBadge status={status} />
-                  </td>
-                  <td className={`${TD} text-right font-medium whitespace-nowrap text-ink tabular-nums`}>
-                    {formatCedis(total)}
-                  </td>
-                  <td className={TD}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedId(order._id);
-                      }}
-                      aria-label={`View order ${shortOrderId(order._id)}`}
-                    >
-                      View
-                      <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+              <AnimatePresence>
+                {filtered.map(({ order, status, customer, items, total }, index) => (
+                  <motion.tr
+                    key={order._id}
+                    variants={rowVariants}
+                    custom={index}
+                    initial="hidden"
+                    animate="show"
+                    exit="exit"
+                    onClick={() => setSelectedId(order._id)}
+                    className={`${TR} cursor-pointer ${selectedId === order._id ? "bg-ink/3" : ""}`}
+                  >
+                    <td className={TD}>
+                      <p className="font-mono text-[13px] font-medium text-ink">{shortOrderId(order._id)}</p>
+                      <p className="text-xs text-muted">
+                        {items} {items === 1 ? "item" : "items"}
+                        <span className="lg:hidden"> · {formatDate(order.createdAt)}</span>
+                      </p>
+                    </td>
+                    <td className={`${TD} max-w-55`}>
+                      <p className="truncate text-ink">{customer.name || "Guest"}</p>
+                      {customer.phone && <p className="truncate text-xs text-muted">{customer.phone}</p>}
+                    </td>
+                    <td className={`${TD} hidden whitespace-nowrap text-ink-soft lg:table-cell`}>
+                      {formatDate(order.createdAt)}
+                    </td>
+                    <td className={TD}>
+                      <PaymentBadge paid={Boolean(order.payment)} />
+                      <p className="mt-1 text-xs whitespace-nowrap text-muted">{order.paymentMethod || "—"}</p>
+                    </td>
+                    <td className={TD}>
+                      <OrderStatusBadge status={status} />
+                    </td>
+                    <td className={`${TD} text-right font-medium whitespace-nowrap text-ink tabular-nums`}>
+                      {formatCedis(total)}
+                    </td>
+                    <td className={TD}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedId(order._id);
+                        }}
+                        aria-label={`View order ${shortOrderId(order._id)}`}
+                      >
+                        View
+                        <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Button>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>
@@ -440,7 +451,7 @@ function Orders() {
 
       {content}
 
-      <OrderDrawer
+      <OrderDetailsModal
         order={selectedOrder}
         productsById={productsById}
         updating={updating}

@@ -1,4 +1,4 @@
-import { Cormorant_Garamond, Poppins, Work_Sans } from "next/font/google";
+import { Cormorant_Garamond, Manrope, Poppins } from "next/font/google";
 import "./globals.css";
 import { EcommerceContextProvider } from "@/context/EcommerceContextProvider";
 import MotionProvider from "@/components/common/MotionProvider";
@@ -20,10 +20,10 @@ const cormorant = Cormorant_Garamond({
   display: "swap",
 });
 
-const workSans = Work_Sans({
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-work-sans",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -81,7 +81,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${cormorant.variable} ${workSans.variable}`}
+      className={`${poppins.variable} ${cormorant.variable} ${manrope.variable}`}
     >
       <body className={poppins.className}>
         <MotionProvider>

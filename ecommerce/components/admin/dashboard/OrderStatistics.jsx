@@ -25,7 +25,7 @@ export default function OrderStatistics({ statistics, loading = false }) {
       />
 
       {loading ? (
-        <div className={`${CARD_X} space-y-4 pb-5`}>
+        <div className={`${CARD_X} space-y-4 pb-4`}>
           <Skeleton className="h-2 w-full" />
           {Array.from({ length: 4 }, (_, i) => (
             <Skeleton key={i} className="h-5 w-full" />

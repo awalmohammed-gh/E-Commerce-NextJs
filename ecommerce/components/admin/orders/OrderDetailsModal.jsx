@@ -4,7 +4,7 @@ import Image from "next/image";
 import { CreditCard, MapPin, Package, Phone, Trash2, User } from "lucide-react";
 import { ORDER_STATUSES, ORDER_STATUS_META, DEFAULT_ORDER_STATUS } from "@/lib/orderStatus";
 import { formatCedis } from "@/lib/formatCurrency";
-import { Drawer } from "@/components/admin/ui/Dialog";
+import { Modal } from "@/components/admin/ui/Dialog";
 import Button from "@/components/admin/ui/Button";
 import { OrderStatusBadge, PaymentBadge } from "@/components/admin/ui/Badge";
 import { Select, LABEL } from "@/components/admin/ui/Field";
@@ -12,7 +12,7 @@ import { customerOf, itemCount, orderLines, orderTotal, shortOrderId } from "./o
 
 function Section({ title, children, className = "" }) {
   return (
-    <section className={`border-b border-line px-4 py-4 sm:px-5 ${className}`}>
+    <section className={`border-b border-ink/8 px-5 py-4 last:border-b-0 sm:px-6 ${className}`}>
       <h3 className="mb-3 text-xs font-medium tracking-[0.06em] text-muted uppercase">{title}</h3>
       {children}
     </section>
@@ -44,7 +44,7 @@ const formatDateTime = (value) =>
   mark paid/unpaid, delete. All updates go through the parent so the
   list stays in sync.
 */
-export default function OrderDrawer({
+export default function OrderDetailsModal({
   order,
   productsById,
   updating,
@@ -64,9 +64,11 @@ export default function OrderDrawer({
   const busy = updating === "status" || updating === "payment";
 
   return (
-    <Drawer
+    <Modal
       open={open}
       onClose={onClose}
+      size="lg"
+      bodyClassName=""
       title={order ? `Order ${shortOrderId(order._id)}` : "Order"}
       description={order && `Placed ${formatDateTime(order.createdAt)}`}
       footer={
@@ -230,6 +232,6 @@ export default function OrderDrawer({
           </Section>
         </>
       )}
-    </Drawer>
+    </Modal>
   );
 }

@@ -74,14 +74,14 @@ export default function StoreSettings({ values, errors, onChange, saved, ...card
       description="Delivery, currency, tax and order limits for the whole store."
       {...cardProps}
     >
-      <div className="space-y-5">
+      <div className="space-y-4">
         <DeliveryFeeSetting
           value={values.deliveryFee}
           savedValue={saved?.deliveryFee}
           error={errors.deliveryFee}
           onChange={(v) => onChange("deliveryFee", v)}
         />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <TextField
             id="store-currency"
             label="Currency code"
@@ -121,7 +121,7 @@ export default function StoreSettings({ values, errors, onChange, saved, ...card
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <NumberField
             id="store-taxPercentage"
             label="Tax percentage"

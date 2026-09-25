@@ -42,7 +42,7 @@ export default function DashboardStatCard({
         <Icon className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
       </div>
 
-      <p className="mt-3 text-xl font-semibold tracking-[-0.01em] sm:text-2xl break-words text-ink tabular-nums">
+      <p className="mt-2 text-xl font-semibold tracking-[-0.01em] sm:text-2xl break-words text-ink tabular-nums">
         {value}
       </p>
 

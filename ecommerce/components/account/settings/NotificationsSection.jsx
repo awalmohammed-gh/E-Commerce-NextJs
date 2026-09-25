@@ -11,7 +11,7 @@ const OPTIONS = [
 ];
 
 function Switch({ checked, disabled, onChange, labelledBy, describedBy }) {
-  return (
+  return ( 
     <button
       type="button"
       role="switch"

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 import { RefreshCw, SearchX, ShoppingCart, Trash2, Users as UsersIcon } from "lucide-react";
 import { isUnauthorized } from "@/lib/adminDashboardApi";
@@ -14,6 +15,7 @@ import SearchInput from "@/components/admin/ui/SearchInput";
 import { TABLE, TD, TH, TR } from "@/components/admin/ui/Table";
 import { ConfirmDialog } from "@/components/admin/ui/Dialog";
 import { useToast } from "@/components/admin/ui/Toast";
+import { rowVariants } from "@/lib/adminMotion";
 import { EmptyState, ErrorState, InlineAlert, Skeleton, friendlyError } from "@/components/admin/ui/States";
 
 const primaryAddress = (user) => user.addresses?.find((a) => a.isDefault) || user.addresses?.[0] || null;
@@ -165,34 +167,44 @@ export default function Customers() {
       <Card className="overflow-hidden">
         {/* Phones */}
         <ul className="divide-y divide-line md:hidden">
-          {filtered.map((user) => {
-            const address = primaryAddress(user);
-            const cart = cartItemCount(user);
-            return (
-              <li key={user._id} className="flex items-start gap-3 p-4">
-                <Avatar name={user.fullName} size="md" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ink">{user.fullName || "Unnamed customer"}</p>
-                  <p className="truncate text-xs text-muted">{user.email}</p>
-                  <p className="mt-1 text-xs text-muted">
-                    Joined {formatDate(user.createdAt)}
-                    {address?.city && ` · ${address.city}`}
-                    {cart > 0 && ` · ${cart} in cart`}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={Trash2}
-                  onClick={() => setPendingDelete(user)}
-                  className="hover:bg-danger-tint hover:text-danger"
-                  aria-label={`Delete ${user.fullName || user.email}`}
+          <AnimatePresence>
+            {filtered.map((user, index) => {
+              const address = primaryAddress(user);
+              const cart = cartItemCount(user);
+              return (
+                <motion.li
+                  key={user._id}
+                  variants={rowVariants}
+                  custom={index}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
+                  className="flex items-start gap-3 p-4"
                 >
-                  Delete
-                </Button>
-              </li>
-            );
-          })}
+                  <Avatar name={user.fullName} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-ink">{user.fullName || "Unnamed customer"}</p>
+                    <p className="truncate text-xs text-muted">{user.email}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      Joined {formatDate(user.createdAt)}
+                      {address?.city && ` · ${address.city}`}
+                      {cart > 0 && ` · ${cart} in cart`}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={Trash2}
+                    onClick={() => setPendingDelete(user)}
+                    className="hover:bg-danger-tint hover:text-danger"
+                    aria-label={`Delete ${user.fullName || user.email}`}
+                  >
+                    Delete
+                  </Button>
+                </motion.li>
+              );
+            })}
+          </AnimatePresence>
         </ul>
 
         {/* md and up */}
@@ -211,56 +223,66 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((user) => {
-                const address = primaryAddress(user);
-                const cart = cartItemCount(user);
-                return (
-                  <tr key={user._id} className={TR}>
-                    <td className={TD}>
-                      <div className="flex min-w-50 items-center gap-3">
-                        <Avatar name={user.fullName} />
-                        <div className="min-w-0">
-                          <p className="truncate font-medium text-ink">{user.fullName || "Unnamed customer"}</p>
-                          <p className="truncate text-xs text-muted">{user.email}</p>
+              <AnimatePresence>
+                {filtered.map((user, index) => {
+                  const address = primaryAddress(user);
+                  const cart = cartItemCount(user);
+                  return (
+                    <motion.tr
+                      key={user._id}
+                      variants={rowVariants}
+                      custom={index}
+                      initial="hidden"
+                      animate="show"
+                      exit="exit"
+                      className={TR}
+                    >
+                      <td className={TD}>
+                        <div className="flex min-w-50 items-center gap-3">
+                          <Avatar name={user.fullName} />
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-ink">{user.fullName || "Unnamed customer"}</p>
+                            <p className="truncate text-xs text-muted">{user.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className={`${TD} whitespace-nowrap text-ink-soft`}>{address?.phone || <Muted />}</td>
-                    <td className={`${TD} text-ink-soft`}>
-                      {address ? (
-                        <p className="max-w-50 truncate">
-                          {[address.city, address.region].filter(Boolean).join(", ") || address.address}
-                        </p>
-                      ) : (
-                        <Muted>No address saved</Muted>
-                      )}
-                    </td>
-                    <td className={`${TD} hidden text-ink-soft lg:table-cell`}>
-                      {cart > 0 ? (
-                        <span className="inline-flex items-center gap-1.5 tabular-nums">
-                          <ShoppingCart className="h-3.5 w-3.5 text-muted" aria-hidden="true" />
-                          {cart} {cart === 1 ? "item" : "items"}
-                        </span>
-                      ) : (
-                        <Muted>Empty</Muted>
-                      )}
-                    </td>
-                    <td className={`${TD} whitespace-nowrap text-ink-soft`}>{formatDate(user.createdAt)}</td>
-                    <td className={`${TD} text-right`}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={Trash2}
-                        onClick={() => setPendingDelete(user)}
-                        className="hover:bg-danger-tint hover:text-danger"
-                        aria-label={`Delete ${user.fullName || user.email}`}
-                      >
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                      <td className={`${TD} whitespace-nowrap text-ink-soft`}>{address?.phone || <Muted />}</td>
+                      <td className={`${TD} text-ink-soft`}>
+                        {address ? (
+                          <p className="max-w-50 truncate">
+                            {[address.city, address.region].filter(Boolean).join(", ") || address.address}
+                          </p>
+                        ) : (
+                          <Muted>No address saved</Muted>
+                        )}
+                      </td>
+                      <td className={`${TD} hidden text-ink-soft lg:table-cell`}>
+                        {cart > 0 ? (
+                          <span className="inline-flex items-center gap-1.5 tabular-nums">
+                            <ShoppingCart className="h-3.5 w-3.5 text-muted" aria-hidden="true" />
+                            {cart} {cart === 1 ? "item" : "items"}
+                          </span>
+                        ) : (
+                          <Muted>Empty</Muted>
+                        )}
+                      </td>
+                      <td className={`${TD} whitespace-nowrap text-ink-soft`}>{formatDate(user.createdAt)}</td>
+                      <td className={`${TD} text-right`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={Trash2}
+                          onClick={() => setPendingDelete(user)}
+                          className="hover:bg-danger-tint hover:text-danger"
+                          aria-label={`Delete ${user.fullName || user.email}`}
+                        >
+                          Delete
+                        </Button>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>

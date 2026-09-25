@@ -45,7 +45,7 @@ export default function AddressCard({ address, pending, disabled, onEdit, onDele
 
   return (
     <article
-      className={`flex flex-col rounded-sm border bg-white p-5 transition-opacity sm:p-6 ${
+      className={`flex flex-col rounded-card border bg-white p-5 transition-opacity sm:p-6 ${
         address.isDefault ? "border-ink" : "border-line"
       } ${pending === "delete" ? "opacity-50" : ""}`}
       aria-label={`${address.label} address${address.isDefault ? ", default" : ""}`}
@@ -89,7 +89,7 @@ export default function AddressCard({ address, pending, disabled, onEdit, onDele
 
 export function AddressCardSkeleton() {
   return (
-    <div className="space-y-3 rounded-sm border border-line bg-white p-6" aria-hidden="true">
+    <div className="space-y-3 rounded-card border border-line bg-white p-6" aria-hidden="true">
       <div className="skeleton h-3.5 w-20" />
       <div className="skeleton mt-5 h-4 w-40" />
       <div className="skeleton h-3 w-28" />

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
+import { motion } from "framer-motion";
 import { Check, ChevronRight, Heart, Loader2, Minus, PackageX, Plus, Share2 } from "lucide-react";
 
 import Toast from "@/ui/Toast";
@@ -16,8 +17,16 @@ import { formatCedis } from "@/lib/formatCurrency";
 import { DEFAULT_SIZE, getUnitPrice, hasDiscount } from "@/lib/pricing";
 import { categoryLabel, findStoreCategory, shopCategoryHref } from "@/lib/categories";
 import { useWishlistToggle } from "@/lib/useWishlistToggle";
+import { fadeScale, fadeUp } from "@/lib/storeMotion";
+import Bump from "@/components/motion/Bump";
 
 const LOW_STOCK = 5;
+
+// The details column follows the photos by a beat
+const detailsIn = {
+  ...fadeUp,
+  show: { ...fadeUp.show, transition: { ...fadeUp.show.transition, delay: 0.08 } },
+};
 const MAX_PER_ADD = 99;
 
 function DetailsSkeleton() {
@@ -25,7 +34,7 @@ function DetailsSkeleton() {
     <div className="page-x py-6 lg:py-10" aria-busy="true" aria-label="Loading product">
       <div className="skeleton mb-6 h-3.5 w-48" />
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-16">
-        <div className="skeleton -mx-4 aspect-3/4 sm:-mx-6 md:mx-0" />
+        <div className="skeleton -mx-4 aspect-4/5 rounded-none sm:-mx-6 md:mx-0 md:rounded-card" />
         <div className="space-y-4 pt-2">
           <div className="skeleton h-3 w-24" />
           <div className="skeleton h-10 w-4/5" />
@@ -33,11 +42,11 @@ function DetailsSkeleton() {
           <div className="skeleton mt-8 h-3 w-16" />
           <div className="flex gap-2">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="skeleton h-12 w-12" />
+              <div key={i} className="skeleton h-12 w-12 rounded-full" />
             ))}
           </div>
-          <div className="skeleton mt-6 h-12 w-full" />
-          <div className="skeleton h-12 w-full" />
+          <div className="skeleton mt-6 h-12 w-full rounded-full" />
+          <div className="skeleton h-12 w-full rounded-full" />
         </div>
       </div>
     </div>
@@ -234,16 +243,16 @@ export default function ProductDetailsPage() {
       : { text: "In stock", dot: "bg-success", tone: "text-success" };
 
   const badge = outOfStock ? (
-    <span className="badge bg-ink text-cream">Sold out</span>
+    <span className="badge bg-ink/85 text-paper backdrop-blur-md">Sold out</span>
   ) : onSale ? (
-    <span className="badge bg-paper text-rose-deep">{discount}% off</span>
+    <span className="badge bg-terracotta-deep text-white">{discount}% off</span>
   ) : null;
 
   return (
     <>
-      <div className="page-x pt-4 pb-16 sm:pt-6 lg:pt-8 lg:pb-24">
+      <div className="page-x pt-0 pb-16 sm:pt-6 lg:pt-8 lg:pb-24">
         <nav aria-label="Breadcrumb" className="mb-4 hidden md:block lg:mb-6">
-          <ol className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
+          <ol className="flex flex-wrap items-center gap-1.5 text-[12px] font-medium tracking-[0.06em] text-muted uppercase">
             <li>
               <Link href="/" className="hover:text-ink">Home</Link>
             </li>
@@ -264,28 +273,36 @@ export default function ProductDetailsPage() {
           </ol>
         </nav>
 
-        <div className="grid grid-cols-1 gap-7 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-10 lg:gap-16">
-          <ProductGallery images={images} name={name} badge={badge} />
+        <div className="grid grid-cols-1 gap-7 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:gap-10 lg:gap-20">
+          {/* Once loaded: the photos settle in, the details follow just after */}
+          <motion.div variants={fadeScale} initial="hidden" animate="show" className="min-w-0">
+            <ProductGallery images={images} name={name} badge={badge} />
+          </motion.div>
 
           {/* Information and purchase */}
-          <div className="md:sticky md:top-24 md:self-start lg:top-28">
+          <motion.div
+            variants={detailsIn}
+            initial="hidden"
+            animate="show"
+            className="md:sticky md:top-24 md:self-start lg:top-28"
+          >
             {category && (
-              <Link href={categoryHref} className="eyebrow hover:text-ink">
+              <Link href={categoryHref} className="kicker transition-colors hover:text-ink">
                 {categoryLabel(category)}
                 {subCategory && ` · ${subCategory}`}
               </Link>
             )}
-            <h1 className="heading-display mt-2 text-[34px] sm:text-4xl lg:text-[44px]">{name}</h1>
+            <h1 className="heading-display mt-4 text-[38px] sm:text-[46px] lg:text-[56px]">{name}</h1>
 
-            <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className={`text-2xl ${onSale ? "text-rose-deep" : "text-ink"}`}>{formatCedis(unitPrice)}</span>
+            <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className={`text-[26px] font-semibold tabular-nums ${onSale ? "text-terracotta-deep" : "text-ink"}`}>{formatCedis(unitPrice)}</span>
               {onSale && (
                 <>
                   <span className="text-base text-muted line-through">
                     <span className="sr-only">Was </span>
                     {formatCedis(price)}
                   </span>
-                  <span className="text-[13px] text-rose-deep">Save {formatCedis(price - unitPrice)}</span>
+                  <span className="badge bg-terracotta-tint text-terracotta-deep">Save {formatCedis(price - unitPrice)}</span>
                 </>
               )}
             </div>
@@ -297,11 +314,11 @@ export default function ProductDetailsPage() {
 
             {/* Size */}
             {hasSizes && (
-              <fieldset className="mt-8">
-                <legend className="mb-3 text-[13px] font-medium tracking-[0.08em] uppercase">
+              <fieldset id="size-picker" className="mt-8 scroll-mt-32">
+                <legend className="mb-3 text-[11px] font-semibold tracking-[0.18em] uppercase">
                   Size
                   {selectedSize && (
-                    <span className="ml-2 font-normal tracking-normal normal-case text-muted">{selectedSize}</span>
+                    <span className="ml-2 text-[13px] font-normal tracking-normal normal-case text-muted">{selectedSize}</span>
                   )}
                 </legend>
                 <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Size">
@@ -318,8 +335,8 @@ export default function ProductDetailsPage() {
                           setSizeError(false);
                         }}
                         disabled={outOfStock}
-                        className={`flex h-12 min-w-12 items-center justify-center rounded-[3px] border px-3 text-[15px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                          selected ? "border-ink bg-ink text-cream" : "border-line bg-white text-ink hover:border-ink"
+                        className={`flex h-12 min-w-12 items-center justify-center rounded-full border px-4 text-[14px] font-medium transition-[background-color,border-color,color,transform] duration-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
+                          selected ? "border-ink bg-ink text-paper" : sizeError ? "border-danger/50 bg-white text-ink hover:border-ink" : "border-line bg-white text-ink hover:border-ink"
                         }`}
                       >
                         {size}
@@ -338,24 +355,24 @@ export default function ProductDetailsPage() {
             {/* Quantity, add to bag, save */}
             <div className="mt-8 flex gap-3">
               {!outOfStock && (
-                <div className="flex h-12 shrink-0 items-center rounded-[3px] border border-line bg-white" role="group" aria-label="Quantity">
+                <div className="flex h-12 shrink-0 items-center rounded-full border border-line bg-white px-1" role="group" aria-label="Quantity">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
-                    className="flex h-full w-11 items-center justify-center text-ink disabled:opacity-30"
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-cream disabled:opacity-30"
                     aria-label="Decrease quantity"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
-                  <span className="w-8 text-center text-[15px]" aria-live="polite">
+                  <span className="w-7 text-center text-[15px] font-medium tabular-nums" aria-live="polite">
                     {quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.min(Math.max(canAddMore, 1), q + 1))}
                     disabled={quantity >= canAddMore}
-                    className="flex h-full w-11 items-center justify-center text-ink disabled:opacity-30"
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-cream disabled:opacity-30"
                     aria-label="Increase quantity"
                   >
                     <Plus className="h-4 w-4" />
@@ -367,7 +384,7 @@ export default function ProductDetailsPage() {
                 type="button"
                 onClick={handleAddToBag}
                 disabled={outOfStock || Boolean(adding)}
-                className="btn-primary min-h-12 flex-1"
+                className="btn-accent min-h-12 flex-1"
               >
                 {adding === "cart" ? (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -383,9 +400,11 @@ export default function ProductDetailsPage() {
                 disabled={wishlist.pending}
                 aria-pressed={isLiked}
                 aria-label={isLiked ? "Remove from wishlist" : "Save to wishlist"}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[3px] border border-line bg-white text-ink transition-colors hover:border-ink disabled:opacity-50"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink transition-[border-color,transform] duration-300 hover:border-ink active:scale-95 disabled:opacity-50"
               >
-                <Heart className={`h-5 w-5 ${isLiked ? "fill-rose-deep text-rose-deep" : ""}`} strokeWidth={1.6} />
+                <Bump value={isLiked} scale={1.15}>
+                  <Heart className={`h-5 w-5 ${isLiked ? "fill-terracotta-deep text-terracotta-deep" : ""}`} strokeWidth={1.6} />
+                </Bump>
               </button>
             </div>
 
@@ -410,16 +429,16 @@ export default function ProductDetailsPage() {
             </div>
 
             {/* Details */}
-            <div className="mt-8 divide-y divide-line border-y border-line">
-              <section className="py-5">
-                <h2 className="text-[13px] font-medium tracking-[0.08em] uppercase">Details</h2>
+            <div className="mt-9 space-y-3">
+              <section className="rounded-card border border-line bg-white p-5 sm:p-6">
+                <h2 className="text-[11px] font-semibold tracking-[0.18em] uppercase">Details</h2>
                 <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-line text-ink-soft">
                   {description || "No description has been added for this product yet."}
                 </p>
               </section>
-              <section className="py-5">
-                <h2 className="text-[13px] font-medium tracking-[0.08em] uppercase">Delivery & payment</h2>
-                <ul className="mt-3 space-y-1.5 text-[15px] text-ink-soft">
+              <section className="rounded-card bg-cream p-5 sm:p-6">
+                <h2 className="text-[11px] font-semibold tracking-[0.18em] uppercase">Delivery & payment</h2>
+                <ul className="mt-3 space-y-2 text-[15px] text-ink-soft marker:text-terracotta [&>li]:ml-4 [&>li]:list-disc">
                   <li>
                     {deliveryFee == null
                       ? "One flat delivery fee per order, shown in your cart."
@@ -432,15 +451,50 @@ export default function ProductDetailsPage() {
                 </ul>
               </section>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
-      <div className="pb-16 sm:pb-24">
+      <div className="pb-28 md:pb-24">
         <RelatedItems category={category} currentProductId={productId} />
       </div>
 
-      <div className="toast-region">
+      {/* Phones: price and add to bag stay within reach */}
+      {!outOfStock && (
+        <div className="fixed inset-x-0 bottom-0 z-90 border-t border-line/70 bg-paper/85 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl backdrop-saturate-150 md:hidden">
+          <div className="mx-auto flex max-w-xl items-center gap-4">
+            <div className="min-w-0">
+              <p className="truncate text-[12px] text-muted">
+                {hasSizes ? (selectedSize ? `Size ${selectedSize}` : "Choose a size") : name}
+              </p>
+              <p className={`text-lg font-semibold tabular-nums ${onSale ? "text-terracotta-deep" : "text-ink"}`}>
+                {formatCedis(unitPrice)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                // Without a size the add is refused; bring the size picker into view
+                if (hasSizes && !selectedSize) {
+                  document.getElementById("size-picker")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+                handleAddToBag();
+              }}
+              disabled={Boolean(adding)}
+              className="btn-accent min-h-12 flex-1"
+            >
+              {adding === "cart" ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : justAdded ? (
+                <Check className="h-4 w-4" aria-hidden="true" />
+              ) : null}
+              {adding === "cart" ? "Adding" : justAdded ? "Added" : "Add to bag"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="toast-region bottom-24 md:bottom-6">
         <Toast success={toast.success} error={toast.error} message={toast.message} onClose={clearToast} />
       </div>
     </>

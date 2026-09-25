@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { motion } from "framer-motion";
 import { Package, PackagePlus, RefreshCw, ShoppingBag, Users, Wallet } from "lucide-react";
 import { fetchDashboardOverview, isRequestCanceled, isUnauthorized } from "@/lib/adminDashboardApi";
 import { formatCedis } from "@/lib/formatCurrency";
@@ -16,6 +17,7 @@ import PageHeader from "@/components/admin/ui/PageHeader";
 import Button from "@/components/admin/ui/Button";
 import { Card } from "@/components/admin/ui/Card";
 import { ErrorState, InlineAlert, friendlyError } from "@/components/admin/ui/States";
+import { itemVariants, staggerContainer } from "@/lib/adminMotion";
 
 const formatCount = (n) => Number(n || 0).toLocaleString("en-GH");
 
@@ -146,11 +148,21 @@ export default function AdminOverview() {
           {/* A refresh failed: keep the last numbers and say so */}
           {error && <InlineAlert>{error} Showing the last loaded figures.</InlineAlert>}
 
-          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:gap-4 xl:grid-cols-4">
+          {/* Skeletons show at once (also in the server HTML); the real
+              figures stagger in when they arrive */}
+          <motion.div
+            key={showSkeleton ? "loading" : "ready"}
+            className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:gap-4 xl:grid-cols-4"
+            variants={staggerContainer(0.05)}
+            initial={showSkeleton ? false : "hidden"}
+            animate="show"
+          >
             {statCards.map((card) => (
-              <DashboardStatCard key={card.title} {...card} loading={showSkeleton} />
+              <motion.div key={card.title} variants={itemVariants} className="min-w-0">
+                <DashboardStatCard {...card} loading={showSkeleton} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 gap-4 lg:gap-5 xl:grid-cols-3">
             <div className="min-w-0 xl:col-span-2">

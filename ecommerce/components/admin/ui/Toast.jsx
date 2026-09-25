@@ -1,7 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
+import { toastVariants } from "@/lib/adminMotion";
 
 /*
   One toast region for the whole admin. Pages call
@@ -48,32 +50,41 @@ export function ToastProvider({ children }) {
         className="pointer-events-none fixed inset-x-4 bottom-4 z-[500] flex flex-col items-center gap-2 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:items-end"
         aria-live="polite"
       >
-        {toasts.map((toast) => {
-          const error = toast.type === "error";
-          const Icon = error ? AlertCircle : CheckCircle2;
+        <AnimatePresence initial={false}>
+          {toasts.map((toast) => {
+            const error = toast.type === "error";
+            const Icon = error ? AlertCircle : CheckCircle2;
 
-          return (
-            <div
-              key={toast.id}
-              role={error ? "alert" : "status"}
-              className="pointer-events-auto flex w-full items-start gap-3 rounded-lg border border-line bg-white py-3 pr-2 pl-3.5 shadow-[0_12px_32px_-8px_rgb(28_26_23/0.18)] [animation:admin-toast-in_180ms_var(--ease-out-soft)] sm:w-[360px]"
-            >
-              <Icon
-                className={`mt-0.5 h-4 w-4 shrink-0 ${error ? "text-danger" : "text-success"}`}
-                aria-hidden="true"
-              />
-              <p className="min-w-0 flex-1 text-sm leading-snug text-ink">{toast.message}</p>
-              <button
-                type="button"
-                onClick={() => dismiss(toast.id)}
-                className="-my-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted transition-colors hover:bg-ink/5 hover:text-ink"
-                aria-label="Dismiss notification"
+            return (
+              <motion.div
+                key={toast.id}
+                layout
+                role={error ? "alert" : "status"}
+                variants={toastVariants}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                className={`pointer-events-auto flex w-full items-start gap-3 rounded-2xl border bg-white/88 py-3 pr-2 pl-3.5 shadow-panel backdrop-blur-xl backdrop-saturate-150 sm:w-[360px] ${
+                  error ? "border-danger/20" : "border-white/60"
+                }`}
               >
-                <X className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-            </div>
-          );
-        })}
+                <Icon
+                  className={`mt-0.5 h-4 w-4 shrink-0 ${error ? "text-danger" : "text-success"}`}
+                  aria-hidden="true"
+                />
+                <p className="min-w-0 flex-1 text-sm leading-snug text-ink">{toast.message}</p>
+                <button
+                  type="button"
+                  onClick={() => dismiss(toast.id)}
+                  className="-my-1 flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted transition-colors hover:bg-ink/5 hover:text-ink"
+                  aria-label="Dismiss notification"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );

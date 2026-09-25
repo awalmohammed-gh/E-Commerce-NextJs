@@ -169,7 +169,7 @@ export default function AddressModal({ open, onClose, onSaved, editingAddress = 
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 24 }}
                 transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-                className="storefront pointer-events-auto flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-md bg-paper shadow-[0_24px_60px_rgba(28,26,23,0.25)] sm:max-w-xl sm:rounded-sm"
+                className="storefront pointer-events-auto flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-plate bg-paper shadow-lift sm:max-w-xl sm:rounded-card"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="address-modal-title"
@@ -192,7 +192,7 @@ export default function AddressModal({ open, onClose, onSaved, editingAddress = 
                 <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
                   <div className="space-y-5 overflow-y-auto overscroll-contain px-5 py-6 sm:px-7">
                     {formError && (
-                      <p role="alert" className="flex items-start gap-2.5 rounded-[3px] bg-danger-tint px-4 py-3 text-[14px] text-danger">
+                      <p role="alert" className="alert-error">
                         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                         {formError}
                       </p>
@@ -211,7 +211,7 @@ export default function AddressModal({ open, onClose, onSaved, editingAddress = 
                               aria-checked={active}
                               onClick={() => setField("label", value)}
                               disabled={saving}
-                              className={`min-h-11 flex-1 rounded-[3px] border px-4 text-[14px] transition-colors sm:flex-none ${
+                              className={`min-h-11 flex-1 rounded-full border px-4 text-[14px] transition-colors sm:flex-none ${
                                 active ? "border-ink bg-ink text-cream" : "border-line bg-white text-ink hover:border-ink/40"
                               }`}
                             >

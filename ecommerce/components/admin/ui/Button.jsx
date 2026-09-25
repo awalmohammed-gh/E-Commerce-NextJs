@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
   four intents. Pass href to render a Link with the same styling.
 */
 const BASE =
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors select-none disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50";
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,transform] duration-150 select-none active:scale-[0.98] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50";
 
 const VARIANTS = {
   primary: "bg-ink text-white hover:bg-ink-hover",

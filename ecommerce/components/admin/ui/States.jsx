@@ -12,7 +12,7 @@ export function Skeleton({ className = "", style }) {
 export function EmptyState({ icon: Icon, title, message, action, compact = false }) {
   return (
     <div
-      className={`flex flex-col items-center text-center ${compact ? "px-4 py-10" : "px-6 py-16"}`}
+      className={`flex flex-col items-center text-center ${compact ? "px-4 py-8" : "px-6 py-12"}`}
     >
       {Icon && (
         <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper">
@@ -31,7 +31,7 @@ export function ErrorState({ title = "Something went wrong", message, onRetry, r
   return (
     <div
       role="alert"
-      className={`flex flex-col items-center text-center ${compact ? "px-4 py-10" : "px-6 py-16"}`}
+      className={`flex flex-col items-center text-center ${compact ? "px-4 py-8" : "px-6 py-12"}`}
     >
       <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger-tint">
         <AlertCircle className="h-[18px] w-[18px] text-danger" aria-hidden="true" />

@@ -85,7 +85,7 @@ export default function ImageUploader({ items, onChange, error, uploading = fals
             setDragging(false);
             if (!uploading) add(e.dataTransfer.files);
           }}
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed px-4 py-8 text-center transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink ${
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed px-4 py-6 text-center transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink ${
             error
               ? "border-danger bg-danger-tint/40"
               : dragging

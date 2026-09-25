@@ -2,34 +2,53 @@
 
 /* ==================================================================
    Eleoka storefront design system
-   Warm ink on paper, one restrained accent (rose), editorial serif
-   for display type and a quiet grotesk for everything else.
-   The admin dashboard shares these tokens through the .admin class.
+
+   Warm ivory paper, charcoal ink, deep espresso for contrast and one
+   brand accent: terracotta. An editorial serif (Cormorant) for display
+   type, a clean geometric grotesk (Manrope) for everything else.
+
+   Effects are used on purpose, not everywhere:
+   - gradients: hero frames, image scrims, promotional bands
+   - glass: only on controls that float over imagery or dark frames
+   The admin dashboard shares the colour tokens through the .admin class.
 ================================================================== */
 
 @theme {
   --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
-  --font-sans: var(--font-work-sans), "Work Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, sans-serif;
 
-  /* Ink: text and primary surfaces */
-  --color-ink: #1c1a17;
-  --color-ink-soft: #3d3934;
-  --color-ink-hover: #332f29;
-  /* Supporting text (5.3:1 on paper) */
-  --color-muted: #6f5846;
+  /* Ink: charcoal text and primary surfaces */
+  --color-ink: #1d1916;
+  --color-ink-soft: #3b342e;
+  --color-ink-hover: #2e2722;
+  /* Warm grey supporting text (5.8:1 on paper) */
+  --color-muted: #6b5e53;
   /* Decorative brown, icons and hairlines only */
-  --color-taupe: #8a6a52;
+  --color-taupe: #8c7765;
 
-  /* Paper: backgrounds */
-  --color-paper: #fbf9f5;
-  --color-cream: #f5f1ea;
-  --color-sand: #ece5d9;
-  --color-line: #e3dbcd;
+  /* Paper: warm ivory backgrounds */
+  --color-paper: #faf6ef;
+  --color-cream: #f3ebdf;
+  --color-sand: #e8ddcc;
+  --color-line: #e0d4c1;
 
-  /* Accent - brand rose. rose-deep is the text-safe version (5:1) */
-  --color-rose: #d98880;
-  --color-rose-deep: #a4463e;
-  --color-rose-tint: #f6e4e1;
+  /* Espresso: the dark brand surface (hero frame, footer, bands) */
+  --color-espresso: #2a1c15;
+  --color-espresso-soft: #3b291f;
+  --color-espresso-deep: #1b120d;
+
+  /* Brand accent: terracotta.
+     terracotta-deep is the text-safe tone (5.9:1 on paper, 6.4:1 under white text);
+     terracotta-light is for marks on dark surfaces. */
+  --color-terracotta: #c2653f;
+  --color-terracotta-deep: #9a4526;
+  --color-terracotta-light: #e3936f;
+  --color-terracotta-tint: #f5e1d5;
+
+  /* Legacy names, kept so older markup and the admin pick up the new accent */
+  --color-rose: var(--color-terracotta);
+  --color-rose-deep: var(--color-terracotta-deep);
+  --color-rose-tint: var(--color-terracotta-tint);
 
   /* Status (always paired with an icon or label) */
   --color-success: #3f6b4e;
@@ -46,7 +65,28 @@
   /* Admin app background: a shade deeper than paper so white panels separate */
   --color-canvas: #f5f3ef;
 
+  /* Radii: images and cards share one radius, fields and chips another */
+  --radius-card: 14px;
+  --radius-field: 10px;
+  --radius-plate: 28px;
+
+  /* Shadows: warm-tinted, soft, never grey */
+  --shadow-soft: 0 10px 30px -14px rgb(42 28 21 / 0.2);
+  --shadow-lift: 0 24px 48px -22px rgb(42 28 21 / 0.32);
+  --shadow-glass: 0 8px 32px -10px rgb(15 9 6 / 0.35);
+  --shadow-bar: 0 1px 0 rgb(42 28 21 / 0.06), 0 10px 30px -18px rgb(42 28 21 / 0.25);
+  /* Admin glass panels: an inner top highlight plus a soft two-layer drop */
+  --shadow-panel:
+    inset 0 1px 0 rgb(255 255 255 / 0.65), 0 2px 6px -2px rgb(42 28 21 / 0.06),
+    0 16px 36px -18px rgb(42 28 21 / 0.22);
+  /* Active admin nav pill: a faint terracotta glow */
+  --shadow-accent-glow: 0 8px 20px -8px rgb(154 69 38 / 0.55);
+
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --animate-rise: rise 600ms var(--ease-out-soft) both;
 }
 
 /* ------------------------------------------------------------------
@@ -55,16 +95,21 @@
 @layer base {
   .storefront {
     @apply bg-paper text-ink font-sans antialiased;
-    font-feature-settings: "kern", "liga";
+    font-feature-settings: "kern", "liga", "ss01";
   }
 
   .storefront :focus-visible {
-    outline: 2px solid var(--color-ink);
+    outline: 2px solid var(--color-terracotta-deep);
     outline-offset: 2px;
   }
 
+  /* Dark surfaces (hero, footer, bands) get a light focus ring */
+  .storefront .on-dark :focus-visible {
+    outline-color: var(--color-paper);
+  }
+
   .storefront ::selection {
-    background: var(--color-rose-tint);
+    background: var(--color-terracotta-tint);
     color: var(--color-ink);
   }
 
@@ -88,10 +133,11 @@
 /* ------------------------------------------------------------------
    Admin dialogs and drawers (native <dialog>, components/admin/ui)
 ------------------------------------------------------------------ */
-dialog.admin-dialog::backdrop,
-dialog.admin-drawer::backdrop {
-  background: rgb(28 26 23 / 0.4);
+/* The overlay is drawn (and animated) by framer-motion inside the dialog */
+dialog.admin-dialog::backdrop {
+  background: transparent;
 }
+
 
 /* Admin pages: the canvas runs to the very bottom of the page,
    so no white body shows below short content */
@@ -100,52 +146,74 @@ html:has(.admin) {
 }
 
 /* The page behind an open dialog doesn't scroll */
-html:has(dialog.admin-dialog[open], dialog.admin-drawer[open]) {
+html:has(dialog.admin-dialog[open]) {
   overflow: hidden;
 }
 
-dialog.admin-dialog[open] {
-  animation: admin-pop 160ms var(--ease-out-soft);
+
+/* Loading shimmer: a soft highlight sweeping across sand */
+@keyframes shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
 }
 
-dialog.admin-drawer[open] {
-  animation: admin-slide-right 220ms var(--ease-out-soft);
+/* Homepage cover photograph easing into place once, on load */
+@keyframes hero-settle {
+  from {
+    transform: scale(1.04);
+  }
 }
 
-dialog.admin-drawer.from-left[open] {
-  animation-name: admin-slide-left;
-}
-
-@keyframes admin-pop {
+/* First-paint entrances (CSS, so they never wait for JavaScript) */
+@keyframes settle-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: scale(0.98);
   }
 }
 
-@keyframes admin-slide-right {
-  from {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes admin-slide-left {
-  from {
-    transform: translateX(-100%);
-  }
-}
-
-@keyframes admin-toast-in {
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(14px);
   }
 }
 
-/* Buttons: rectangular with a soft 3px radius, never pills.
-   A utility so the variants below can build on it. */
+/* Buttons: pill-shaped, uppercase, one family of variants below.
+   A utility so the variants can build on it. */
 @utility btn {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] px-6 text-[13px] font-medium tracking-[0.08em] uppercase transition-colors duration-200 select-none disabled:cursor-not-allowed disabled:opacity-45;
+  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-7 text-[12.5px] font-semibold tracking-[0.12em] uppercase transition-[background-color,color,border-color,box-shadow,transform] duration-300 ease-out-soft select-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100;
+}
+
+/* Frosted surfaces for controls that float over imagery.
+   glass-dark: over photographs and the espresso frame (light text)
+   glass-light: over pale images and ivory (dark text) */
+@utility glass-dark {
+  @apply border border-white/20 bg-white/10 text-white shadow-glass backdrop-blur-xl backdrop-saturate-150;
+}
+
+/* glass-tint: light text over pale photographs, where clear glass would vanish */
+@utility glass-tint {
+  @apply border border-white/25 bg-espresso/40 text-white backdrop-blur-md backdrop-saturate-150;
+}
+
+@utility glass-light {
+  @apply border border-white/70 bg-paper/70 text-ink shadow-soft backdrop-blur-xl backdrop-saturate-150;
+}
+
+/* Admin glass. admin-glass for chrome and light cards (sidebar, topbar,
+   KPI cards); admin-glass-dense for tables and long forms, where text
+   needs a near-solid surface behind it. */
+@utility admin-glass {
+  @apply rounded-2xl border border-white/50 bg-white/65 shadow-panel backdrop-blur-xl backdrop-saturate-150;
+}
+
+@utility admin-glass-dense {
+  @apply rounded-2xl border border-white/60 bg-white/88 shadow-panel backdrop-blur-xl backdrop-saturate-150;
 }
 
 /* ------------------------------------------------------------------
@@ -159,41 +227,70 @@ dialog.admin-drawer.from-left[open] {
 
   /* Small uppercase label above headings */
   .eyebrow {
-    @apply text-[11px] font-medium uppercase tracking-[0.18em] text-muted;
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-muted;
+  }
+
+  /* Eyebrow led by a short terracotta rule, for section openers */
+  .kicker {
+    @apply inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta-deep;
+  }
+  .kicker::before {
+    content: "";
+    @apply h-px w-8 bg-current;
   }
 
   .heading-display {
-    @apply font-display font-medium leading-[1.02] tracking-[-0.01em] text-ink;
+    @apply font-display font-medium leading-[0.98] tracking-[-0.015em] text-ink;
   }
 
   .heading-section {
-    @apply font-display text-3xl font-medium leading-tight text-ink sm:text-4xl;
+    @apply font-display text-[34px] font-medium leading-[1.02] tracking-[-0.01em] text-ink sm:text-[44px];
+  }
+
+  /* Italic serif accent inside a heading, e.g. "Shop by <em>category</em>" */
+  .heading-display em,
+  .heading-section em {
+    @apply font-display italic text-terracotta-deep;
   }
 
   .btn-primary {
-    @apply btn bg-ink text-cream hover:bg-ink-hover;
+    @apply btn bg-ink text-paper hover:bg-espresso hover:shadow-lift;
+  }
+  /* The one warm call to action per view */
+  .btn-accent {
+    @apply btn bg-terracotta-deep text-white hover:bg-[#853a1f] hover:shadow-lift;
+    background-image: linear-gradient(135deg, rgb(255 255 255 / 0.1), transparent 60%);
   }
   .btn-secondary {
-    @apply btn border border-ink/25 bg-transparent text-ink hover:border-ink;
+    @apply btn border border-ink/20 bg-transparent text-ink hover:border-ink hover:bg-ink hover:text-paper;
   }
   .btn-light {
-    @apply btn bg-paper text-ink hover:bg-cream;
+    @apply btn bg-paper text-ink hover:bg-white hover:shadow-lift;
+  }
+  /* Over photographs and the espresso frame */
+  .btn-glass {
+    @apply btn glass-dark hover:bg-white/20;
   }
   .btn-sm {
-    @apply min-h-9 px-4 text-[12px];
+    @apply min-h-10 px-5 text-[11.5px];
   }
 
-  /* Underlined text link */
+  /* Underlined text link with a terracotta rule */
   .link {
-    @apply underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink;
+    @apply underline decoration-terracotta/45 decoration-1 underline-offset-[5px] transition-colors hover:decoration-terracotta-deep;
+  }
+
+  /* Uppercase link with an arrow, for "View all" and similar */
+  .link-arrow {
+    @apply inline-flex items-center gap-2 text-[12px] font-semibold tracking-[0.14em] text-ink uppercase transition-colors hover:text-terracotta-deep;
   }
 
   /* Form fields */
   .field-label {
-    @apply mb-1.5 block text-[13px] font-medium text-ink;
+    @apply mb-1.5 block text-[13px] font-semibold text-ink;
   }
   .field {
-    @apply block min-h-12 w-full rounded-[3px] border border-line bg-white px-3.5 text-[15px] text-ink transition-colors outline-none placeholder:text-muted/60 hover:border-ink/35 focus:border-ink disabled:opacity-60 aria-invalid:border-danger;
+    @apply block min-h-12 w-full rounded-field border border-line bg-white px-4 text-[15px] text-ink transition-[border-color,box-shadow] duration-200 outline-none placeholder:text-muted/60 hover:border-ink/35 focus:border-ink focus:ring-4 focus:ring-terracotta/12 disabled:opacity-60 aria-invalid:border-danger aria-invalid:focus:ring-danger/10;
   }
   .field-error {
     @apply mt-1.5 text-[13px] text-danger;
@@ -204,17 +301,38 @@ dialog.admin-drawer.from-left[open] {
 
   /* Quiet bordered surface, for summaries and forms */
   .panel {
-    @apply rounded-sm border border-line bg-white;
+    @apply rounded-card border border-line bg-white;
   }
 
-  /* Loading placeholder block */
+  /* Alert box for form and page errors */
+  .alert-error {
+    @apply flex items-start gap-2.5 rounded-field border border-danger/15 bg-danger-tint px-4 py-3 text-[14px] text-danger;
+  }
+
+  /* Loading placeholder block: a shimmer the shape of the final content */
   .skeleton {
-    @apply animate-pulse rounded-[3px] bg-sand;
+    @apply animate-shimmer rounded-[8px];
+    background-color: var(--color-sand);
+    background-image: linear-gradient(
+      100deg,
+      transparent 20%,
+      rgb(255 255 255 / 0.45) 50%,
+      transparent 80%
+    );
+    background-size: 200% 100%;
   }
 
   /* Status label - pair with text, never colour alone */
   .badge {
-    @apply inline-flex items-center gap-1.5 rounded-[3px] px-2 py-1 text-[11px] font-medium uppercase tracking-[0.08em];
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.1em];
+  }
+
+  /* Choice chip (sizes, categories, filters) */
+  .chip {
+    @apply inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-line bg-white px-4 text-[14px] text-ink-soft transition-colors hover:border-ink hover:text-ink;
+  }
+  .chip-active {
+    @apply border-ink bg-ink text-paper hover:text-paper;
   }
 
   /* Fixed region for toasts (bottom centre on phones, bottom right above) */
@@ -232,9 +350,60 @@ dialog.admin-drawer.from-left[open] {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  /* ---------------- Gradients (used sparingly) ---------------- */
+
+  /* The espresso frame: a warm terracotta glow in one corner */
+  .bg-espresso-glow {
+    background-color: var(--color-espresso);
+    background-image:
+      radial-gradient(90% 70% at 88% 0%, rgb(194 101 63 / 0.32), transparent 60%),
+      radial-gradient(70% 60% at 0% 100%, rgb(59 41 31 / 0.9), transparent 70%),
+      linear-gradient(165deg, var(--color-espresso) 0%, var(--color-espresso-deep) 100%);
+  }
+
+  /* Warm promotional band: terracotta deepening into espresso */
+  .bg-terracotta-band {
+    background-color: var(--color-terracotta-deep);
+    background-image:
+      radial-gradient(80% 120% at 100% 0%, rgb(227 147 111 / 0.35), transparent 60%),
+      linear-gradient(120deg, #a34a29 0%, #6f2f19 55%, var(--color-espresso) 100%);
+  }
+
+  /* Soft ivory section wash */
+  .bg-ivory-fade {
+    background-image: linear-gradient(180deg, var(--color-cream) 0%, var(--color-paper) 100%);
+  }
+
+  /* Scrim under text on photographs */
+  .scrim-bottom {
+    background-image: linear-gradient(
+      to top,
+      rgb(27 18 13 / 0.85) 0%,
+      rgb(27 18 13 / 0.45) 45%,
+      transparent 100%
+    );
+  }
 }
 
-/* Slideshow: the active dot fills over the slide's duration (components/ui/Slideshow.jsx) */
+/* Browsers without backdrop-filter: glass falls back to a denser surface */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-dark {
+    background-color: rgb(42 28 21 / 0.82);
+  }
+  .glass-light {
+    background-color: rgb(250 246 239 / 0.95);
+  }
+  .glass-tint {
+    background-color: rgb(42 28 21 / 0.75);
+  }
+  .admin-glass,
+  .admin-glass-dense {
+    background-color: var(--color-paper);
+  }
+}
+
+/* Slideshow: the active bar fills over the slide's duration (components/ui/Slideshow.jsx) */
 @keyframes slideshow-progress {
   from {
     transform: scaleX(0);

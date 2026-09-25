@@ -38,10 +38,12 @@ export default async function ContactPage() {
 
   return (
     <>
-      <section className="border-b border-line bg-cream">
+      <section className="border-b border-line bg-ivory-fade">
         <div className="page-x py-12 sm:py-16 lg:py-20">
-          <p className="eyebrow">Contact &amp; help</p>
-          <h1 className="heading-display mt-4 max-w-2xl text-[44px] sm:text-6xl">We&rsquo;re here to help.</h1>
+          <p className="kicker">Contact &amp; help</p>
+          <h1 className="heading-display mt-5 max-w-3xl text-[48px] sm:text-[72px]">
+            We&rsquo;re here <em>to help.</em>
+          </h1>
           <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-ink-soft">
             Most answers are already in your account. For anything else, reach us directly or visit the boutique.
           </p>
@@ -57,12 +59,14 @@ export default async function ContactPage() {
           <ul className="mt-6 divide-y divide-line border-y border-line">
             {HELP_LINKS.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className="group flex min-h-18 items-center gap-4 py-4 transition-colors hover:bg-cream/60 sm:px-3">
+                <Link href={link.href} className="group flex min-h-18 items-center gap-4 rounded-field py-4 transition-colors hover:bg-cream sm:px-4">
                   <span className="min-w-0 flex-1">
                     <span className="block text-[16px] text-ink">{link.title}</span>
                     <span className="block text-[14px] text-muted">{link.text}</span>
                   </span>
-                  <ChevronRight className="h-4.5 w-4.5 shrink-0 text-taupe transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/15 transition-colors duration-300 group-hover:border-terracotta-deep group-hover:bg-terracotta-deep group-hover:text-white">
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </span>
                 </Link>
               </li>
             ))}
@@ -101,7 +105,9 @@ export default async function ContactPage() {
                   {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   className="group flex items-start gap-4"
                 >
-                  <Icon className="mt-1 h-5 w-5 shrink-0 text-taupe" strokeWidth={1.5} aria-hidden="true" />
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cream text-terracotta-deep">
+                    <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+                  </span>
                   <span className="min-w-0">
                     <span className="block text-[13px] text-muted">{label}</span>
                     <span className="flex items-center gap-1.5 text-[16px] text-ink decoration-ink/30 underline-offset-4 group-hover:underline">
@@ -114,7 +120,7 @@ export default async function ContactPage() {
             ))}
           </ul>
 
-          <div className="relative mt-8 aspect-4/3 overflow-hidden rounded-xs border border-line bg-sand">
+          <div className="relative mt-8 aspect-4/3 overflow-hidden rounded-card border border-line bg-sand">
             <iframe
               title="Map showing the Eleoka boutique"
               src={`https://www.google.com/maps?q=${mapsQuery}&output=embed`}
