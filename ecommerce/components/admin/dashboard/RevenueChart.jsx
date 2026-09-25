@@ -196,26 +196,30 @@ export default function RevenueChart({ onUnauthorized }) {
               </div>
             </div>
 
-            {/* Screen-reader table view of the same data */}
-            <table className="sr-only">
-              <caption>Revenue by {series.unit}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Period</th>
-                  <th scope="col">Revenue</th>
-                  <th scope="col">Orders</th>
-                </tr>
-              </thead>
-              <tbody>
-                {points.map((point) => (
-                  <tr key={point.key}>
-                    <td>{point.label}</td>
-                    <td>{formatCedis(point.revenue)}</td>
-                    <td>{point.orders}</td>
+            {/* Screen-reader table view of the same data. sr-only sits on a
+                wrapper: a table ignores overflow and height, so on the table
+                itself it would stay full height and stretch the page. */}
+            <div className="sr-only">
+              <table>
+                <caption>Revenue by {series.unit}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Period</th>
+                    <th scope="col">Revenue</th>
+                    <th scope="col">Orders</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {points.map((point) => (
+                    <tr key={point.key}>
+                      <td>{point.label}</td>
+                      <td>{formatCedis(point.revenue)}</td>
+                      <td>{point.orders}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </div>

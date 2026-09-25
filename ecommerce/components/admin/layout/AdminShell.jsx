@@ -123,7 +123,7 @@ export default function AdminShell({ children }) {
           <main id="admin-main" className="min-w-0">
             <motion.div
               key={pathname}
-              className="pt-5 pb-8"
+              className="pt-5 pb-4"
               variants={pageVariants}
               initial={navigated ? "hidden" : false}
               animate="show"
