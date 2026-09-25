@@ -1,82 +1,125 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { SHOP_SLIDES } from "@/lib/slides";
-import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
+import { Reveal } from "@/components/motion/Reveal";
 
 /*
-  One campaign as a "shop the edit" card: a clean photograph on top
-  (no text over it, so nothing fights the picture) and the name plus a
-  clear button on a solid panel below. The whole card is the link.
+  Where each campaign photograph sits in the collage, by position:
+  a large lead plate on the right, a smaller one layered over its lower
+  left edge, and a small square tucked in at the top left.
 */
-function EditCard({ slide }) {
+const COLLAGE = [
+  {
+    frame: "relative ml-auto aspect-4/5 w-[64%] shadow-lift",
+    sizes: "(max-width: 767px) 60vw, 30vw",
+  },
+  {
+    frame: "absolute -bottom-8 left-0 z-10 aspect-3/4 w-[44%] border-[6px] border-paper shadow-lift md:-bottom-10",
+    sizes: "(max-width: 767px) 40vw, 20vw",
+  },
+  {
+    frame: "absolute top-0 left-[6%] aspect-square w-[26%] shadow-soft",
+    sizes: "(max-width: 767px) 26vw, 13vw",
+  },
+];
+
+// One campaign photograph in the collage, linking to its edit
+function Plate({ slide, index, layout }) {
   return (
     <Link
       href={slide.primary.href}
-      className="group flex h-full flex-col overflow-hidden rounded-card border border-line bg-white transition-[transform,box-shadow,border-color] duration-500 ease-out-soft hover:-translate-y-1 hover:border-transparent hover:shadow-lift"
+      aria-label={`${slide.eyebrow}: ${slide.title}`}
+      className={`group block overflow-hidden rounded-card bg-sand ${layout.frame}`}
     >
-      <div className="relative aspect-4/5 overflow-hidden bg-sand sm:aspect-5/6">
-        <Image
-          src={slide.image}
-          alt={slide.alt}
-          fill
-          placeholder="blur"
-          sizes="(max-width: 767px) 80vw, 33vw"
-          style={{ objectPosition: slide.focus }}
-          className="object-cover transition-transform duration-900 ease-out-soft group-hover:scale-[1.04]"
-        />
-        <span className="absolute top-3 left-3 rounded-full bg-paper/95 px-3 py-1 text-[10.5px] font-semibold tracking-[0.18em] text-ink uppercase shadow-soft">
-          {slide.eyebrow}
-        </span>
-      </div>
-
-      <div className="flex flex-1 flex-col justify-between gap-4 p-5 sm:p-6">
-        <h3 className="font-display text-[26px] leading-[1.1] text-ink sm:text-[28px]">{slide.title}</h3>
-        <span className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full border border-ink/15 px-5 text-[12px] font-semibold tracking-[0.12em] text-ink uppercase transition-colors duration-300 group-hover:border-ink group-hover:bg-ink group-hover:text-paper">
-          {slide.primary.label}
-          <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
-        </span>
-      </div>
+      <Image
+        src={slide.image}
+        alt={slide.alt}
+        fill
+        placeholder="blur"
+        sizes={layout.sizes}
+        style={{ objectPosition: slide.focus }}
+        className="object-cover transition-transform duration-900 ease-out-soft group-hover:scale-[1.04]"
+      />
+      <span className="absolute top-3 left-3 rounded-full bg-paper/95 px-2.5 py-1 text-[10px] font-semibold tracking-[0.18em] text-ink uppercase shadow-soft">
+        {String(index + 1).padStart(2, "0")}
+        <span className={index === 2 ? "sr-only" : ""}> · {slide.eyebrow}</span>
+      </span>
     </Link>
   );
 }
 
 /*
   The current campaigns (SHOP_SLIDES in lib/slides.js, the same data as
-  the shop banner) as three equal cards under a short heading.
-  Phones get a swipeable row; tablets and up a three-column grid.
+  the shop banner) as a brand moment: a few lines of copy with the
+  campaigns listed as links on the left, and their photographs layered
+  off the grid on the right. The mirror of EditorialBand further down.
+  The collage is composed for three campaigns; only the first three show.
 */
 export default function CampaignTiles() {
-  if (SHOP_SLIDES.length === 0) return null;
+  const slides = SHOP_SLIDES.slice(0, COLLAGE.length);
+  if (slides.length === 0) return null;
 
   return (
-    <section className="page-x" aria-labelledby="campaigns-title">
-      <Reveal className="mb-7 flex items-end justify-between gap-6 sm:mb-10">
-        <div className="min-w-0">
-          <p className="kicker mb-3">Shop the edit</p>
-          <h2 id="campaigns-title" className="heading-section">
-            Collections &amp; <em>offers</em>
+    <section className="page-x relative" aria-labelledby="campaigns-title">
+      <div className="grid grid-cols-1 items-center gap-14 md:grid-cols-12 lg:gap-8">
+        {/* Words */}
+        <Reveal className="md:col-span-6 lg:col-span-5">
+          <p className="kicker">Shop the edit</p>
+          <h2 id="campaigns-title" className="heading-display mt-5 text-[42px] sm:text-[56px] lg:text-[64px]">
+            Collections <em>&amp; offers.</em>
           </h2>
-        </div>
-        <Link href="/shop" className="link-arrow group shrink-0 pb-1.5">
-          Shop all
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/15 transition-colors duration-300 group-hover:border-terracotta-deep group-hover:bg-terracotta-deep group-hover:text-white">
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </span>
-        </Link>
-      </Reveal>
+          <p className="mt-6 max-w-md text-[16px] leading-relaxed text-ink-soft">
+            What&rsquo;s new, what&rsquo;s reduced and the easy pieces we reach for every day,
+            gathered in one place.
+          </p>
 
-      <RevealGroup
-        as="ul"
-        stagger={0.08}
-        className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 no-scrollbar sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:gap-6"
-      >
-        {SHOP_SLIDES.map((slide) => (
-          <RevealItem as="li" key={slide.id} className="w-[78%] shrink-0 snap-start sm:w-[46%] md:w-auto">
-            <EditCard slide={slide} />
-          </RevealItem>
-        ))}
-      </RevealGroup>
+          <ol className="mt-8 max-w-md border-t border-line">
+            {slides.map((slide, i) => (
+              <li key={slide.id} className="border-b border-line">
+                <Link
+                  href={slide.primary.href}
+                  className="group flex items-center gap-5 py-4 transition-colors hover:text-terracotta-deep"
+                >
+                  <span className="font-display text-[15px] text-taupe italic">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[10.5px] font-semibold tracking-[0.2em] text-muted uppercase">
+                      {slide.eyebrow}
+                    </span>
+                    <span className="mt-0.5 block font-display text-[22px] leading-tight">{slide.title}</span>
+                  </span>
+                  <ArrowUpRight
+                    className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+            <Link href="/shop" className="btn-primary group">
+              Shop all
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
+            </Link>
+            <Link href="/shop?onSale=true" className="link text-[15px] font-medium">
+              See the sale
+            </Link>
+          </div>
+        </Reveal>
+
+        {/* Photographs */}
+        <Reveal
+          variant="fadeScale"
+          className="relative mb-8 md:col-span-6 md:col-start-7 md:mb-10 lg:col-span-6 lg:col-start-7"
+        >
+          {slides.map((slide, i) => (
+            <Plate key={slide.id} slide={slide} index={i} layout={COLLAGE[i]} />
+          ))}
+        </Reveal>
+      </div>
     </section>
   );
 }
